@@ -54,7 +54,7 @@ def main(**kwargs):
     )
 
     # get fms model
-    config_data={'d_model': 4096, 'n_layer': 64, 'vocab_size': 50277, 'ssm_cfg': {}, 'rms_norm': True, 'residual_in_fp32': True, 'fused_add_norm': True, 'pad_vocab_size_multiple': 8}
+    config_data={'d_model': 4096, 'n_layer': 64, 'vocab_size': 32000, 'ssm_cfg': {}, 'rms_norm': True, 'residual_in_fp32': True, 'fused_add_norm': True, 'pad_vocab_size_multiple': 8}
     mamba_config = MambaConfig(**config_data)
 
     if cfg.low_cpu_fsdp:
