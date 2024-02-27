@@ -21,6 +21,9 @@ from fms_fsdp.utils.train_utils import (
     train,
 )
 
+from mamba_ssm.models.config_mamba import MambaConfig
+from mamba_ssm.models.mixer_seq_simple import MambaLMHeadModel
+
 
 def main(**kwargs):
     # get configs
@@ -51,18 +54,17 @@ def main(**kwargs):
     )
 
     # get fms model
-    llama_config = get_model_config(cfg.model_variant)
+    config_data={'d_model': 4096, 'n_layer': 64, 'vocab_size': 50277, 'ssm_cfg': {}, 'rms_norm': True, 'residual_in_fp32': True, 'fused_add_norm': True, 'pad_vocab_size_multiple': 8}
+    mamba_config = MambaConfig(**config_data)
 
     if cfg.low_cpu_fsdp:
         if rank == 0:
-            model = LLaMA(llama_config)
-            model.reset_parameters()
+            model = MambaLMHeadModel(mamba_config)
         else:
             with torch.device("meta"):
-                model = LLaMA(llama_config)
+                model = MambaLMHeadModel(mamba_config)
     else:
-        model = LLaMA(llama_config)
-        model.reset_parameters()
+        model = MambaLMHeadModel(mamba_config)
 
     if rank == 0:
         total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
