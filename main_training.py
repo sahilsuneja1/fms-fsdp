@@ -58,11 +58,12 @@ def main(**kwargs):
     mamba_config = MambaConfig(**config_data)
 
     if cfg.low_cpu_fsdp:
-        if rank == 0:
-            model = MambaLMHeadModel(mamba_config)
-        else:
-            with torch.device("meta"):
-                model = MambaLMHeadModel(mamba_config)
+        raise ValueError("For unknown reason, low_cpu_mode will make Mamba model hangs. Please disable low_cpu_mode.")
+        # if rank == 0:
+        #     model = MambaLMHeadModel(mamba_config)
+        # else:
+        #     with torch.device("meta"):
+        #         model = MambaLMHeadModel(mamba_config)
     else:
         model = MambaLMHeadModel(mamba_config)
 
