@@ -54,12 +54,23 @@ def main(**kwargs):
     )
 
     # get fms model
-    config_data={'d_model': 2048, 'n_layer': 48, 'vocab_size': 32000, 'ssm_cfg': {}, 'rms_norm': True, 'residual_in_fp32': True, 'fused_add_norm': True, 'pad_vocab_size_multiple': 8}  # 1.4b
+    config_data = {
+        "d_model": 2048,
+        "n_layer": 48,
+        "vocab_size": 32000,
+        "ssm_cfg": {},
+        "rms_norm": True,
+        "residual_in_fp32": True,
+        "fused_add_norm": True,
+        "pad_vocab_size_multiple": 8,
+    }  # 1.4b
     # config_data={'d_model': 4096, 'n_layer': 64, 'vocab_size': 32000, 'ssm_cfg': {}, 'rms_norm': True, 'residual_in_fp32': True, 'fused_add_norm': True, 'pad_vocab_size_multiple': 8}  # 7b
     mamba_config = MambaConfig(**config_data)
 
     if cfg.low_cpu_fsdp:
-        raise ValueError("For unknown reason, low_cpu_mode will make Mamba model hangs. Please disable low_cpu_mode.")
+        raise ValueError(
+            "For unknown reason, low_cpu_mode will make Mamba model hangs. Please disable low_cpu_mode."
+        )
         # if rank == 0:
         #     model = MambaLMHeadModel(mamba_config)
         # else:
