@@ -4,7 +4,7 @@ import os
 import fire
 import torch
 import torch.optim as optim
-from fms.models.llama import LLaMA
+from fms.models.llama import LLaMA, LLaMAConfig
 from torch import distributed as dist
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.optim.lr_scheduler import LambdaLR
@@ -53,7 +53,11 @@ def main(**kwargs):
     )
 
     # get fms model
-    llama_config = get_model_config(cfg.model_variant)
+    llama_config = LLaMAConfig(
+            emb_dim=2048,
+            nlayers=48,
+            hidden_grow_factor=1.5,
+        )
 
     if cfg.low_cpu_fsdp:
         if rank == 0:
