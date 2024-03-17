@@ -1,6 +1,7 @@
 from functools import partial
 
 from fms_extras.models.sandbox_model import SandboxUnit
+from fms.models.llama import LLaMABlock
 from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
     CheckpointImpl,
     apply_activation_checkpointing,
@@ -18,7 +19,7 @@ def apply_fsdp_checkpointing(model, every_xth_item):
     def selective_checkpointing(submodule):
         selective_checkpointing.__dict__.setdefault("_count", 0)
 
-        if isinstance(submodule, SandboxUnit):
+        if isinstance(submodule, SandboxUnit) or isinstance(submodule, LLaMABlock):
             selective_checkpointing._count += 1
             if (
                 not every_xth_item
