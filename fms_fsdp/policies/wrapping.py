@@ -1,6 +1,7 @@
 import functools
 
 from fms_extras.models.sandbox_model import SandboxUnit
+from fms.models.llama import LLaMABlock
 from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
 
 
@@ -9,6 +10,7 @@ def get_llama_wrapper():
         transformer_auto_wrap_policy,
         transformer_layer_cls={
             SandboxUnit,
+            LLaMABlock,
         },
     )
 
