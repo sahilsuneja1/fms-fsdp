@@ -7,9 +7,21 @@ from mamba_ssm.models.mixer_seq_simple import MambaLMHeadModel
 
 def main(load_path, save_path, tokenizer_name_or_path):
     print("Initializing model...")
+    # # 7b
+    # config_data = {
+    #     "d_model": 4096,
+    #     "n_layer": 64,
+    #     "vocab_size": 32000,
+    #     "ssm_cfg": {},
+    #     "rms_norm": True,
+    #     "residual_in_fp32": True,
+    #     "fused_add_norm": True,
+    #     "pad_vocab_size_multiple": 8,
+    # }
+    # 1.4b
     config_data = {
-        "d_model": 4096,
-        "n_layer": 64,
+        "d_model": 2048,
+        "n_layer": 48,
         "vocab_size": 32000,
         "ssm_cfg": {},
         "rms_norm": True,
