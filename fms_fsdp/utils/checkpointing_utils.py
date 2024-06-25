@@ -87,6 +87,7 @@ class Checkpointer:
         rank,
         local_rank,
         report_fn=None,
+        model_auto_placement=False,
     ):
         self.max_ckps = n_to_save
         self.rank = rank
@@ -96,6 +97,7 @@ class Checkpointer:
         self.p_mode = parallel_mode
         assert parallel_mode in ["fsdp", "hsdp", "ddp"]
         self.report = self._selective_print if report_fn is None else report_fn
+        self.model_auto_placement = model_auto_placement
 
     def _selective_print(self, *args, **kwargs):
         if self.rank == 0:
@@ -168,7 +170,7 @@ class Checkpointer:
         return None
 
     def load(
-        self, model, optimizer, dataloader, path="", reset_stepcount=False, strict=True
+        self, model, optimizer, dataloader, path="", reset_stepcount=False, strict=True, **kwargs,
     ):
         """
         Handle checkpoint loading for model/optimizer/dataloader from given path, according to arguments.
@@ -192,8 +194,14 @@ class Checkpointer:
             model_load_time = time.time()
             if os.path.isfile(load_path):
                 checkpoint_data = torch.load(load_path, map_location="cpu")
-                model.load_state_dict(checkpoint_data.get("model_state"), strict=strict)
-                model.to(self.local_rank)
+                if 'is_compiled' in kwargs.keys() and kwargs['is_compiled'] is True:
+                    model._orig_mod.load_state_dict(checkpoint_data.get("model_state"), strict=strict)
+                else:
+                    model.load_state_dict(checkpoint_data.get("model_state"), strict=strict)
+                if self.model_auto_placement:
+                    model.to('cuda')
+                else:
+                    model.to(self.local_rank)                
                 self.report(
                     f"Checkpoint {load_path} is a single-file checkpoint containing only a model. Optimizer and dataloader are from scratch.",
                     model_load_time=time.time() - model_load_time,
@@ -202,15 +210,26 @@ class Checkpointer:
             else:
                 # Load model
                 with FSDP.state_dict_type(model, StateDictType.SHARDED_STATE_DICT):
-                    state_dict = model.state_dict()
+                    if 'is_compiled' in kwargs.keys() and kwargs['is_compiled'] is True:
+                        state_dict = model._orig_mod.state_dict()
+                    else:
+                        state_dict = model.state_dict()
                     model_ckp = {"model_state": state_dict}
                     load_state_dict(
                         state_dict=model_ckp,
                         storage_reader=FileSystemReader(load_path),
                         planner=DefaultLoadPlanner(),
                     )
-                    model.load_state_dict(model_ckp["model_state"])
-                model.to(self.local_rank)
+                    if 'is_compiled' in kwargs.keys() and kwargs['is_compiled'] is True:
+                        model._orig_mod.load_state_dict(model_ckp["model_state"])
+                    else:
+                        model.load_state_dict(model_ckp["model_state"])
+
+                if self.model_auto_placement:
+                    model.to('cuda')
+                else:
+                    model.to(self.local_rank)
+                    
                 self.report(model_load_time=time.time() - model_load_time)
                 step = 0
                 ntok = 0
@@ -225,12 +244,14 @@ class Checkpointer:
                     optim_load_time = time.time()
                     with FSDP.state_dict_type(model, StateDictType.SHARDED_STATE_DICT):
                         optim_state = load_sharded_optimizer_state_dict(
-                            model_state_dict=model.state_dict(),
+                            model_state_dict=model.state_dict() if 'is_compiled' not in kwargs.keys() or kwargs['is_compiled'] is False else model._orig_mod.state_dict(),
                             optimizer_key="optimizer_state",
                             storage_reader=FileSystemReader(load_path),
                         )
                     flattened_osd = FSDP.optim_state_dict_to_load(
-                        model, optimizer, optim_state["optimizer_state"]
+                        model if 'is_compiled' not in kwargs.keys() or kwargs['is_compiled'] is False else model._orig_mod
+                        optimizer,
+                        optim_state["optimizer_state"]
                     )
                     optimizer.load_state_dict(flattened_osd)
                     self.report(optimizer_load_time=time.time() - optim_load_time)
@@ -239,7 +260,9 @@ class Checkpointer:
                 # Load dataset
                 if dataloader is not None:
                     data_load_time = time.time()
+                    print(f"{path}, {load_path}")
                     dataloader.dataset.load_from_path(load_path)
+                    #dataloader.dataset.load_from_path(path)
                     self.report(dataset_load_time=time.time() - data_load_time)
                 else:
                     self.report("Skipping dataset load, no dataloader provided.")
@@ -260,7 +283,7 @@ class Checkpointer:
         with FSDP.state_dict_type(model, StateDictType.SHARDED_STATE_DICT):
             model_state = model.state_dict()
             optim_state = FSDP.sharded_optim_state_dict(model, optimizer)
-        dataloader_state = dataloader.dataset
+        dataloader_state = None if dataloader is None else dataloader.dataset
 
         save_name = os.path.join(self.ckp_path, "step_" + str(step) + "_ckp")
         state_dict = {"model_state": model_state, "optimizer_state": optim_state}
@@ -295,7 +318,10 @@ class Checkpointer:
             StateDictType.FULL_STATE_DICT,
             FullStateDictConfig(offload_to_cpu=True, rank0_only=True),
         ):
-            model_state = model.state_dict()
+            if 'is_compiled' in kwargs.keys() and kwargs['is_compiled'] is True:
+                model_state = model._orig_mod.state_dict()
+            else:
+                model_state = model.state_dict()        
         if self.rank == 0:
             metadata = kwargs
             metadata["step"] = step

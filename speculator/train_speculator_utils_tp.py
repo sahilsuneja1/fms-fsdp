@@ -113,7 +113,7 @@ def generate(
     return result
 
 
-def stage1_loss(model, speculator, input, loss_fn, ddp_stats):
+def stage1_loss(cfg, model, speculator, base_model_input, input, loss_fn, ddp_stats, base_model_mesh, speculator_mesh):
     """
     Perform a forward pass for stage 1 training and calculate the loss.
     Given the sequence of embeddings produced in parallel by the base model,
@@ -138,17 +138,19 @@ def stage1_loss(model, speculator, input, loss_fn, ddp_stats):
     """
     with torch.no_grad():
         _, embeds = model(
-            input[:, : -speculator.n_predict - 1],
+            base_model_input[:, : -speculator.n_predict - 1],
             include_embeds=True,
             use_cache=False,
         )
+    if cfg.sharding_strategy == 'tp':
+        embeds = embeds.chunk(base_model_mesh['tp'].size())[base_model_mesh['tp'].get_local_rank()]        
     losses = speculator(embeds.detach(), input[:, 1:])
     ddp_stats[2 : 2 + losses.size(0)] += losses
     loss = losses.sum()
     return loss, ddp_stats, input.numel()
 
 
-def stage2_loss(cfg, model, speculator, input, loss_fn, ddp_stats):
+def stage2_loss(cfg, model, speculator, base_model_input, input, loss_fn, ddp_stats, base_model_mesh, speculator_mesh):
     """
     Perform a forward pass for stage 2 training and calculate the loss.
     Given the sequence of embeddings produced in serial by the base model,
@@ -167,20 +169,25 @@ def stage2_loss(cfg, model, speculator, input, loss_fn, ddp_stats):
         assert (
             cfg.stage2_prompt_length * grow_factor <= cfg.seq_length
         ), "Error: batch is too small for specified partition"
-        input = input[:, : cfg.stage2_prompt_length * grow_factor].reshape(
-            input.size(0) * grow_factor, cfg.stage2_prompt_length
+        base_model_input = base_model_input[:, : cfg.stage2_prompt_length * grow_factor].reshape(
+            base_model_input.size(0) * grow_factor, cfg.stage2_prompt_length
         )
         targs, embeds = generate(
             model,
-            input,
+            base_model_input,
             cfg.seq_length,
             cfg.stage2_seq_length,
             do_sample=True,
             use_cache=True,
             include_embeds=True,
         )
+
+        if cfg.sharding_strategy == 'tp':
+            targs = targs.chunk(base_model_mesh['tp'].size())[base_model_mesh['tp'].get_local_rank()]
+            embeds = embeds.chunk(base_model_mesh['tp'].size())[base_model_mesh['tp'].get_local_rank()]        
         targs = targs[:, -cfg.stage2_seq_length :]
         embeds = embeds[:, -cfg.stage2_seq_length : -speculator.n_predict]
+
     losses = speculator(embeds.detach(), targs.detach())
     ddp_stats[2 : 2 + losses.size(0)] += losses
     loss = losses.sum()
@@ -217,6 +224,8 @@ def train_speculator(
     start_step: int = 0,
     n_tok: int = 0,
     profiler: Optional[Union[torch.profiler.profile, None]] = None,
+    base_model_mesh = None,
+    speculator_mesh = None,
 ):
     """
     The training loop for speculator training. Handles at a high level: data loading,
@@ -265,15 +274,21 @@ def train_speculator(
             break
         input = input.to(local_rank)
 
+        if cfg.sharding_strategy == 'tp':
+            base_model_input = torch.zeros(base_model_mesh['tp'].size() * input.size(0), input.size(1), dtype=input.dtype, device=input.device)
+            dist.all_gather_into_tensor(base_model_input, input, group=base_model_mesh['tp'].get_group())
+        else:
+            base_model_input = input
+
         optimizer.zero_grad()
 
         if batch_idx <= cfg.stage2_start_step:
             loss, ddp_stats, step_tok = stage1_loss(
-                model, speculator, input, loss_fn, ddp_stats
+                cfg, model, speculator, base_model_input, input, loss_fn, ddp_stats, base_model_mesh, speculator_mesh
             )
         else:
             loss, ddp_stats, step_tok = stage2_loss(
-                cfg, model, speculator, input, loss_fn, ddp_stats
+                cfg, model, speculator, base_model_input, input, loss_fn, ddp_stats, base_model_mesh, speculator_mesh
             )
 
         loss.backward()
@@ -339,6 +354,7 @@ def train_speculator(
         batch_idx,
         speculator,
         tokens_seen=elapsed_tokens + n_tok,
+        is_compiled=cfg.use_torch_compile,
     )
 
     return train_loss

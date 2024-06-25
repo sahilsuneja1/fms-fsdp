@@ -177,8 +177,11 @@ def train(
     return train_loss
 
 
-def setup():
-    dist.init_process_group("nccl", timeout=timedelta(seconds=60 * 60))
+def setup(dp=None, tp=None):
+    if not dp or not tp:
+        dist.init_process_group("nccl", timeout=timedelta(seconds=60 * 60))
+    else:
+        return dist.device_mesh.init_device_mesh('cuda', (dp, tp), mesh_dim_names=('dp', 'tp'))
 
 
 def setup_environ_flags():

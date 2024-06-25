@@ -1,4 +1,5 @@
 import math
+import time
 import os
 import re
 from typing import Mapping
@@ -30,7 +31,7 @@ from fms_fsdp.utils.train_utils import (
     setup,
     setup_environ_flags,
 )
-from speculator.train_speculator_utils import EmbedLLaMA, train_speculator
+from speculator.train_speculator_utils_tp import EmbedLLaMA, train_speculator
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF']='expandable_segments:True'
 
@@ -139,8 +140,20 @@ def main(**kwargs):
 
     # some setups
     torch.cuda.set_device(local_rank)
-    setup()
-    torch._C._distributed_c10d._register_process_group("default", dist.group.WORLD)
+
+    if cfg.sharding_strategy != 'tp':
+        setup()
+        torch._C._distributed_c10d._register_process_group("default", dist.group.WORLD)
+        base_model_mesh = None
+        speculator_mesh = None
+    else:
+        base_model_mesh = setup(dp=world_size//8, tp=8)
+        speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (world_size,))
+        #base_model_mesh = setup(dp=2, tp=4) #simulated multi node in a single node
+        #speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (8,))
+        torch._C._distributed_c10d._register_process_group("default", base_model_mesh['tp'].get_group())
+        #fms.distributed.tensorparallel.TP_MESH = base_model_mesh['tp']
+
     torch.cuda.empty_cache()
     setup_environ_flags()
     torch.set_default_dtype(torch.bfloat16)
@@ -165,6 +178,7 @@ def main(**kwargs):
         device_type="cuda",
         source="hf",
         distributed_strategy=cfg.sharding_strategy,
+        group=base_model_mesh['tp'].get_group() if cfg.sharding_strategy == 'tp' else None,
     )
     #model = model.bfloat16()
     if False:
@@ -183,18 +197,6 @@ def main(**kwargs):
                 else None
             ),
         )
-
-    if cfg.use_torch_compile and cfg.sharding_strategy != 'tp':
-        print(model.config.max_expected_seq_len)
-        if hasattr(model, "rot_emb"):
-            print("SAHIL rot_emb")
-            # we need this post-fsdp call to avoid graph break with torch.compile
-            model.rot_emb.compute_freqs_cis(
-                torch.device("cuda", torch.cuda.current_device()),
-                model.config.max_expected_seq_len + 10,
-            )    
-        # the default accumulated_cache_size_limit=64 is not enough for 70b model, so we make it 128 here    
-        torch._dynamo.config.accumulated_cache_size_limit = 128   
 
     if False:
         model.eval()
@@ -224,6 +226,15 @@ def main(**kwargs):
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(result)))
         exit(1) 
 
+    if cfg.sharding_strategy == 'tp':
+        print(f"{local_rank}, {rank}, {world_size}, {base_model_mesh['tp'].get_group()}, {base_model_mesh['tp'].size()}, {base_model_mesh['tp'].get_local_rank()}")
+
+    if rank == 0:
+        print(f"{time.time()}")
+        print(model.config)
+        print(model)
+        print("Loading speculator")
+
     # get speculator
     speculator = MLPSpeculator(
         model.config.emb_dim,
@@ -243,7 +254,10 @@ def main(**kwargs):
     if rank == 0:
         print("Constructing datasets...")
     if not cfg.use_dummy_dataset:
-        train_loader = get_data_loader(cfg, rank, world_size, postprocess=[])
+        if cfg.sharding_strategy == 'tp':
+            train_loader = get_data_loader(cfg, speculator_mesh.get_rank(), speculator_mesh.size(), postprocess=[])
+        else:
+            train_loader = get_data_loader(cfg, rank, world_size, postprocess=[])    
     else:
         train_loader = get_dummy_loader(cfg, rank, world_size)
     if rank == 0:
@@ -264,6 +278,7 @@ def main(**kwargs):
             if cfg.low_cpu_fsdp
             else None
         ),
+        device_mesh=speculator_mesh if cfg.sharding_strategy == 'tp' else None,
     )
     apply_fsdp_checkpointing(speculator, MLPSpeculatorLayer, 1)
 
@@ -289,12 +304,16 @@ def main(**kwargs):
     )
 
     # optionally load from checkpoint (when continue pretraining)
-    checkpointer = Checkpointer(cfg.ckpt_save_path, 1000, "ddp", rank, local_rank)
+    if cfg.sharding_strategy == 'tp':
+        checkpointer = Checkpointer(cfg.ckpt_save_path, 1000, "ddp", speculator_mesh.get_rank(), speculator_mesh.get_local_rank(), model_auto_placement=True)
+    else:
+        checkpointer = Checkpointer(cfg.ckpt_save_path, 1000, "ddp", rank, local_rank)
     speculator, optimizer, train_loader, start_step, tokens_seen = checkpointer.load(
         speculator,
         optimizer,
         train_loader,
         path=os.path.join(cfg.ckpt_load_path, "checkpoints/"),
+        is_compiled=cfg.use_torch_compile,
     )
 
     # LR schedule
@@ -357,6 +376,8 @@ def main(**kwargs):
         start_step,
         tokens_seen,
         profiler,
+        base_model_mesh,
+        speculator_mesh,        
     )
 
     dist.barrier()
