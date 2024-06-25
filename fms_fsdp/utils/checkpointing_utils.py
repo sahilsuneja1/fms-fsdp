@@ -249,7 +249,7 @@ class Checkpointer:
                             storage_reader=FileSystemReader(load_path),
                         )
                     flattened_osd = FSDP.optim_state_dict_to_load(
-                        model if 'is_compiled' not in kwargs.keys() or kwargs['is_compiled'] is False else model._orig_mod
+                        model if 'is_compiled' not in kwargs.keys() or kwargs['is_compiled'] is False else model._orig_mod,
                         optimizer,
                         optim_state["optimizer_state"]
                     )
