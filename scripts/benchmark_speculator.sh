@@ -113,15 +113,18 @@ SPECULATOR_ARGS_LLAMA3_70B_SPECU2="\
 --model_path="/gpfs/llama3/hf/70b_instruction_tuned"
 --tokenizer_path="/gpfs/llama3/hf/70b_instruction_tuned"
 --model_source=hf
---speculator_path="/gpfs/suneja/checkpoints/llama3-70b-specu2/checkpoints/step_10765_ckp.pth"
+--speculator_path="/gpfs/suneja/checkpoints/llama3-70b-specu2-wtinitfix/checkpoints/step_14212_ckp.pth"
 --prompt_len=64
---data_path="/gpfs/suneja/datasets/llama3-common-crawl/rel0_7/lang=en"
---subdata="'dataset=commoncrawl'"
+--data_path="/gpfs"
+--subdata="'fineweb-edu'"
 --n_predict=4
 --n_candidates=5
 --threshes=[6,4,3,3]
 --seed=211
 "
+#--speculator_path="/gpfs/suneja/checkpoints/llama3-70b-specu2/checkpoints/step_10765_ckp.pth"
+#--data_path="/gpfs/suneja/datasets/llama3-common-crawl/rel0_7/lang=en"
+#--subdata="'dataset=commoncrawl'"
 
 SPECULATOR_ARGS_CODELLAMA_34B="\
 --architecture=paged_llama

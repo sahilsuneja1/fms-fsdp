@@ -21,35 +21,40 @@ MODEL_ARGS_LLAMA3_8B="\
 --stage2_batch_size=36
 --n_speculator_heads=4
 --speculator_width=4096
---data_path=/gpfs/suneja/datasets/llama3-dolma
---datasets='dataset=stack'
+--data_path=/gpfs/
+--datasets='fineweb-edu'
 --weights='1'
 --low_cpu_fsdp=False
 --use_torch_compile=False
 "
+#--data_path=/gpfs/suneja/datasets/llama3-dolma
+#--datasets='dataset=stack'
 
 MODEL_ARGS_LLAMA3_70B="\
 --model_path=/gpfs/llama3/hf/70b_instruction_tuned
 --model_arch=embedllama
 --model_variant=llama3_70b
---ckpt_load_path=/gpfs/suneja/checkpoints/llama3-70b-specu2
---ckpt_save_path=/gpfs/suneja/checkpoints/llama3-70b-specu2
+--ckpt_load_path=/gpfs/suneja/checkpoints/llama3-70b-specu2-wtinitfix
+--ckpt_save_path=/gpfs/suneja/checkpoints/llama3-70b-specu2-wtinitfix
+--sharding_strategy=tp
 --logical_shards=768
 --seq_length=8192
 --batch_size=2
 --report_interval=10
 --checkpoint_interval=3000
---num_steps=10764
---stage2_start_step=4805
+--num_steps=14211
+--stage2_start_step=11169
 --stage2_batch_size=36
 --n_speculator_heads=4
 --speculator_width=8192
---data_path=/gpfs/llama3-common-crawl/rel0_7/lang=en
---datasets='dataset=commoncrawl'
+--data_path=/gpfs/
+--datasets='fineweb-edu'
 --weights='1'
 --low_cpu_fsdp=False
 --use_torch_compile=False
 "
+#--data_path=/gpfs/llama3-common-crawl/rel0_7/lang=en
+#--datasets='dataset=commoncrawl'
 #--data_path=/gpfs/suneja/datasets/llama3-dolma
 #--datasets='dataset=stack'
 
@@ -90,13 +95,13 @@ then
 
     nohup torchrun \
         --nproc_per_node=8 \
-        speculator/train_speculator.py \
+        speculator/train_speculator_tp.py \
         ${MODEL_ARGS_LLAMA3_70B}\
         >$FOUT &
 else
     torchrun \
         --nproc_per_node=8 \
         speculator/train_speculator.py \
-        ${MODEL_ARGS_LLAMA2_7B}
+        ${MODEL_ARGS_LLAMA3_8B}
 fi
 
