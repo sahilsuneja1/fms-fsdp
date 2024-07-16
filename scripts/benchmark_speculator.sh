@@ -158,8 +158,23 @@ SPECULATOR_ARGS_GRANITE20B_COBOL="\
 --seed=211
 "
 
+SPECULATOR_ARGS_LLAMA2_7B_SPECUV2_TMP="\
+--architecture=paged_llama
+--variant=7b
+--model_path="/gpfs/suneja/models/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590/"
+--tokenizer="/gpfs/suneja/models/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590/"
+--model_source=hf
+--prompt_len=64
+--data_path="/gpfs1/users/suneja/datasets/bpv7_high_quality_rerun_fuzzy_deduped_incomplete/lang=en/"
+--subdata="dataset=commoncrawl"
+--n_predict=3
+--n_candidates=5
+--threshes=[6,4,3]
+--seed=211
+"
+#--speculator_path="/gpfs/suneja/checkpoints/llama2-7b-specuv2-tmp/checkpoints/step_21_ckp.pth"
 
-DO_BACKGROUND=1
+DO_BACKGROUND=0
 
 if [ $DO_BACKGROUND -eq 1 ]
 then
@@ -173,5 +188,5 @@ else
     torchrun \
         --nproc_per_node=1 \
         speculator/benchmark_speculator_logical.py \
-        ${SPECULATOR_ARGS_GRANITE20B_COBOL}
+        ${SPECULATOR_ARGS_LLAMA2_7B_SPECUV2_TMP}
 fi
