@@ -190,7 +190,7 @@ model = get_model(
     device_type=args.device_type,
     source=args.model_source,
     #distributed_strategy=distr_param,
-    distributed_strategy="fsdp",
+    #distributed_strategy="fsdp",
     #group=dist.group.WORLD,
     #norm_eps=1e-6,
 )
@@ -260,8 +260,8 @@ print("cache initialization complete on rank", local_rank)
 print("loading dataset", args.data_path)
 dataset = Streaming_Doc_Dataset(
     args.data_path,
-    #local_rank, #for non fsdp model
-    0, #for fsdp model
+    local_rank, #for non fsdp model
+    #0, #for fsdp model
     world_size,
     -1,
     datasets=[
@@ -275,8 +275,8 @@ dataset = iter(dataset)
 data = []
 in_middle = False
 print("pulling data to build reusable prompt set")
-#while len(data) < 4:
-while len(data) < 100:
+#while len(data) < 5:
+while len(data) < 256:
     chunk = next(dataset)
     if not in_middle:
         data.append(chunk[: args.prompt_len])

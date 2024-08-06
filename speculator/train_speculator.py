@@ -37,7 +37,8 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF']='expandable_segments:True'
 
 def test_model(rank, model, arch, cfg, prompt_type='chat'):
     print("testing model output")
-    tokenizer = tokenizers.get_tokenizer(cfg.model_path)
+    #tokenizer = tokenizers.get_tokenizer(cfg.model_path)
+    tokenizer = tokenizers.get_tokenizer('/gpfs/suneja/models/hub/models--mistralai--Mixtral-8x7B-Instruct-v0.1/snapshots/1e637f2d7cb0a9d6fb1922f305cb784995190a83/tokenizer.model')
     if prompt_type == 'chat':
         template = "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n### Instruction:\n{}\n\n### Response:"
 
@@ -104,8 +105,8 @@ def main(**kwargs):
         base_model_mesh = None
         speculator_mesh = None
     else:
-        #base_model_mesh = setup(dp=world_size//8, tp=8)
-        base_model_mesh = setup(dp=world_size//4, tp=4)
+        base_model_mesh = setup(dp=world_size//8, tp=8)
+        #base_model_mesh = setup(dp=world_size//4, tp=4)
         speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (world_size,))
         #base_model_mesh = setup(dp=2, tp=4) #simulated multi node in a single node
         #speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (8,))
@@ -218,7 +219,7 @@ def main(**kwargs):
         #tie_emb=True,
         #tie_head=True,
         #tie_transition=True,
-        tie_weights=True,
+        #tie_weights=True,
         scale_input=True,
     )
     speculator.reset_parameters()

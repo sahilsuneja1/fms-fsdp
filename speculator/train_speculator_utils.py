@@ -11,8 +11,8 @@ from fms.models.gpt_bigcode import GPTBigCode, GPTBigCodeConfig
 from fms.models.gpt_bigcode import _hf_sd_to_fms_sd as _gptbigcode_hf_sd_to_fms_sd
 from fms.models.llama import LLaMA
 from fms.models.llama import _hf_sd_to_fms_sd as _llama_hf_sd_to_fms_sd
-#from fms.models.mixtral import Mixtral, MixtralConfig
-#from fms.models.mixtral import _hf_sd_to_fms_sd as _mixtral_hf_sd_to_fms_sd
+from fms.models.mixtral import Mixtral, MixtralConfig
+from fms.models.mixtral import _hf_sd_to_fms_sd as _mixtral_hf_sd_to_fms_sd
 from fms_extras.models.calico import Calico, CalicoConfig
 from fms.utils import serialization, tokenizers
 from fms.utils.generation import _make_cache_contiguous
@@ -477,8 +477,8 @@ class ModelEmbedsWrapper(nn.Module):
         return out
 
 
-#class EmbedMixtral(Mixtral): #FMS impl of Mixtral
-class EmbedMixtral(): #FMS impl of Mixtral
+class EmbedMixtral(Mixtral): #FMS impl of Mixtral
+#class EmbedMixtral(): #FMS impl of Mixtral
     # Overrides the forward function of Mixtral to allow returning embedding vectors
     def forward(
         self,
@@ -554,10 +554,10 @@ def _llama_factory_factory(config):
         return EmbedLLaMA(config, **kwargs)
     return factory
 
-#def _mixtral_factory_factory(config):
-#    def factory(**kwargs):
-#        return EmbedMixtral(config, **kwargs)
-#    return factory
+def _mixtral_factory_factory(config):
+    def factory(**kwargs):
+        return EmbedMixtral(config, **kwargs)
+    return factory
 
 _gpt_bigcode_13b_chat_v2_1_config = GPTBigCodeConfig(
     src_vocab_size=50304,
@@ -725,5 +725,5 @@ register_model("embedllama", "llama2.70b", _llama_factory_factory(get_model_conf
 register_model("embedllama", "70b", _llama_factory_factory(get_model_config("llama3_70b")))
 serialization.register_adapter("embedllama", "hf", _llama_hf_sd_to_fms_sd) 
 
-#register_model("embedmixtral", "8x7b", _mixtral_factory_factory(MixtralConfig()))
-#serialization.register_adapter("embedmixtral", "hf", _mixtral_hf_sd_to_fms_sd)
+register_model("embedmixtral", "8x7b", _mixtral_factory_factory(MixtralConfig()))
+serialization.register_adapter("embedmixtral", "hf", _mixtral_hf_sd_to_fms_sd)

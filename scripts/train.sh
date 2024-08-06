@@ -189,6 +189,32 @@ MODEL_ARGS_GRANITE34B="\
 --weights="'1'"
 "
 
+
+MODEL_ARGS_GRANITE_20B="\
+--model_arch=embedgpt_bigcode
+--model_variant=20b
+--model_path="/gpfs/suneja/models/dmf_models/granite-20b-code-instruct-20240506"
+--ckpt_load_path=/gpfs/suneja/checkpoints/granite-20b-tp
+--ckpt_save_path=/gpfs/suneja/checkpoints/granite-20b-tp
+--data_path=/gpfs/suneja/datasets/bluepile-granite
+--logical_shards=768
+--sharding_strategy=tp
+--seq_length=8192
+--batch_size=1
+--report_interval=10
+--checkpoint_interval=5000
+--num_steps=21000
+--stage2_start_step=15000
+--stage2_batch_size=48
+--n_speculator_heads=5
+--speculator_width=6144
+--use_torch_compile=True
+--learning_rate=1e-3
+--seed=42
+--datasets="'lang=en/dataset=github_clean'"
+--weights="'1'"
+"
+
 MODEL_ARGS_GRANITE8B="\
 --model_path=/gpfs/prangan/hub/models--ibm-granite--granite-8b-code-instruct/snapshots/8a0fc76e4d374188e0cc8794d2d7275aa5aa7e64/
 --model_arch=embedcalico
@@ -370,6 +396,32 @@ MODEL_ARGS_LLAMA2_7B_SPECUV1_TMP="\
 --weights="'1'"
 "
 
+
+MODEL_ARGS_MIXTRAL="\
+--model_path=/gpfs/suneja/models/hub/models--mistralai--Mixtral-8x7B-Instruct-v0.1/snapshots/1e637f2d7cb0a9d6fb1922f305cb784995190a83/*.pt
+--model_arch=embedmixtral
+--model_variant=8x7b
+--ckpt_load_path=/gpfs/suneja/checkpoints/mixtral
+--ckpt_save_path=/gpfs/suneja/checkpoints/mixtral
+--logical_shards=768
+--sharding_strategy=hsdp
+--seq_length=32768
+--batch_size=1
+--report_interval=10
+--checkpoint_interval=5000
+--num_steps=21000
+--stage2_start_step=15000
+--stage2_batch_size=36
+--n_speculator_heads=4
+--speculator_width=4096
+--use_torch_compile=False
+--learning_rate=1e-3
+--seed=42
+--data_path=/gpfs1/users/suneja/datasets/bpv7_high_quality_rerun_fuzzy_deduped_incomplete/lang=en/
+--datasets="'dataset=commoncrawl'"
+--weights="'1'"
+"
+
 #export TORCH_LOGS="dynamo,recompiles"
 #export CUDA_LAUNCH_BLOCKING=1
 DO_BACKGROUND=0
@@ -382,13 +434,13 @@ then
     nohup torchrun \
         --nproc_per_node=8 \
         speculator/train_speculator.py \
-        ${MODEL_ARGS_LLAMA2_70B} \
+        ${MODEL_ARGS_MIXTRAL} \
         >$FOUT &
 else
     torchrun \
         --nproc_per_node=8 \
         speculator/train_speculator.py \
-        ${MODEL_ARGS_LLAMA2_7B_SPECUV1_TMP}
+        ${MODEL_ARGS_GRANITE_20B}
 fi        
 
 
