@@ -1,5 +1,6 @@
 import math
 import os
+import time
 import re
 from typing import Mapping
 
@@ -60,6 +61,19 @@ llama_3_70b_config = LLaMAConfig(
     rope_ratio=500000.0,
 )
 
+llama_3_405b_config = LLaMAConfig(
+    src_vocab_size=128256,
+    emb_dim=16384,
+    norm_eps=1e-5,
+    nheads=128,
+    kvheads=16,
+    nlayers=126,
+    hidden_grow_factor=53248/16384,
+    multiple_of=4096,
+    max_expected_seq_len=16384,
+    rope_ratio=500000.0,
+)
+
 def _hf_sd_to_fms_sd(hf_sd: Mapping) -> Mapping:
     replacements = [
         (r"^lm_head.weight", "shared.head.weight"),
@@ -113,6 +127,7 @@ def _llama_factory_factory(config):
 register_model("embedllama", "7b", _llama_factory_factory(LLaMAConfig()))
 register_model("embedllama", "llama3_8b", _llama_factory_factory(llama_3_8b_config))
 register_model("embedllama", "llama3_70b", _llama_factory_factory(llama_3_70b_config))
+register_model("embedllama", "llama3_405b", _llama_factory_factory(llama_3_405b_config))
 #serialization.register_adapter("embedllama", "hf", _hf_sd_to_fms_sd)
 serialization.register_adapter("embedllama", "hf", _llama_hf_sd_to_fms_sd)
 
@@ -196,7 +211,13 @@ def main(**kwargs):
         # the default accumulated_cache_size_limit=64 is not enough for 70b model, so we make it 128 here    
         torch._dynamo.config.accumulated_cache_size_limit = 128   
 
-    if False:
+    if rank == 0:
+        print(f"{time.time()}")
+        print(model.config)
+        print(model)
+
+    if True:
+        print("Testing model generation")
         model.eval()
         torch.set_grad_enabled(False)
         tokenizer = tokenizers.get_tokenizer(cfg.model_path)
@@ -225,6 +246,7 @@ def main(**kwargs):
         exit(1) 
 
     # get speculator
+    print("Loading speculator")
     speculator = MLPSpeculator(
         model.config.emb_dim,
         cfg.speculator_width,

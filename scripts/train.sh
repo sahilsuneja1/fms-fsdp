@@ -136,6 +136,32 @@ MODEL_ARGS_LLAMA2_7B_SPECUV2_TMP="\
 --weights="'1'"
 "
 
+
+MODEL_ARGS_LLAMA3_405B="\
+--model_path=/gpfs/llama3_405b_instruct
+--model_arch=embedllama
+--model_variant=llama3_405b
+--ckpt_load_path=/gpfs/suneja/checkpoints/llama3-405b
+--ckpt_save_path=/gpfs/suneja/checkpoints/llama3-405b
+--logical_shards=768
+--sharding_strategy=tp
+--seq_length=16384
+--batch_size=8
+--report_interval=10
+--checkpoint_interval=5000
+--num_steps=15000
+--stage2_start_step=10000
+--stage2_batch_size=36
+--n_speculator_heads=4
+--speculator_width=16384
+--use_torch_compile=False
+--learning_rate=1e-3
+--data_path=/gpfs
+--datasets="'fineweb-edu'"
+--seed=42
+--weights="'1'"
+"
+
 DO_BACKGROUND=0
 
 if [ $DO_BACKGROUND -eq 1 ]

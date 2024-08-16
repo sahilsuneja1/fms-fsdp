@@ -61,6 +61,20 @@ llama_3_70b_config = LLaMAConfig(
     rope_ratio=500000.0,
 )
 
+llama_3_405b_config = LLaMAConfig(
+    src_vocab_size=128256,
+    emb_dim=16384,
+    norm_eps=1e-5,
+    nheads=128,
+    kvheads=16,
+    nlayers=126,
+    hidden_grow_factor=53248/16384,
+    multiple_of=4096,
+    max_expected_seq_len=16384,
+    rope_ratio=500000.0,
+)
+
+
 def _hf_sd_to_fms_sd(hf_sd: Mapping) -> Mapping:
     replacements = [
         (r"^lm_head.weight", "shared.head.weight"),
@@ -114,6 +128,7 @@ def _llama_factory_factory(config):
 register_model("embedllama", "7b", _llama_factory_factory(LLaMAConfig()))
 register_model("embedllama", "llama3_8b", _llama_factory_factory(llama_3_8b_config))
 register_model("embedllama", "llama3_70b", _llama_factory_factory(llama_3_70b_config))
+register_model("embedllama", "llama3_405b", _llama_factory_factory(llama_3_405b_config))
 #serialization.register_adapter("embedllama", "hf", _hf_sd_to_fms_sd)
 serialization.register_adapter("embedllama", "hf", _llama_hf_sd_to_fms_sd)
 
@@ -147,7 +162,7 @@ def main(**kwargs):
         base_model_mesh = None
         speculator_mesh = None
     else:
-        base_model_mesh = setup(dp=world_size//8, tp=8)
+        base_model_mesh = setup(dp=world_size//32, tp=32)
         speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (world_size,))
         #base_model_mesh = setup(dp=2, tp=4) #simulated multi node in a single node
         #speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (8,))
@@ -198,7 +213,17 @@ def main(**kwargs):
             ),
         )
 
+    if cfg.sharding_strategy == 'tp':
+        print(f"{local_rank}, {rank}, {world_size}, {base_model_mesh['tp'].get_group()}, {base_model_mesh['tp'].size()}, {base_model_mesh['tp'].get_local_rank()}")
+
+    if rank == 0:
+        print(f"{time.time()}")
+        print(model.config)
+        print(model)
+
+    # get speculator
     if False:
+        print("Testing model generation")
         model.eval()
         torch.set_grad_enabled(False)
         tokenizer = tokenizers.get_tokenizer(cfg.model_path)
@@ -226,16 +251,7 @@ def main(**kwargs):
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(result)))
         exit(1) 
 
-    if cfg.sharding_strategy == 'tp':
-        print(f"{local_rank}, {rank}, {world_size}, {base_model_mesh['tp'].get_group()}, {base_model_mesh['tp'].size()}, {base_model_mesh['tp'].get_local_rank()}")
-
-    if rank == 0:
-        print(f"{time.time()}")
-        print(model.config)
-        print(model)
-        print("Loading speculator")
-
-    # get speculator
+    print("Loading speculator")
     speculator = MLPSpeculator(
         model.config.emb_dim,
         cfg.speculator_width,
@@ -260,7 +276,7 @@ def main(**kwargs):
             train_loader = get_data_loader(cfg, rank, world_size, postprocess=[])    
     else:
         train_loader = get_dummy_loader(cfg, rank, world_size)
-    if rank == 0:
+
         print("Datasets constructed!")
 
     # FSDP
@@ -268,7 +284,8 @@ def main(**kwargs):
         speculator,
         auto_wrap_policy=None,
         mixed_precision=mixed_precision_policy,
-        sharding_strategy=ShardingStrategy.NO_SHARD,
+        #sharding_strategy=ShardingStrategy.NO_SHARD,
+        sharding_strategy=ShardingStrategy.FULL_SHARD,
         use_orig_params=cfg.use_torch_compile,
         device_id=torch.cuda.current_device(),
         limit_all_gathers=True,

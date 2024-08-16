@@ -174,6 +174,22 @@ SPECULATOR_ARGS_LLAMA2_7B_SPECUV2_TMP="\
 "
 #--speculator_path="/gpfs/suneja/checkpoints/llama2-7b-specuv2-tmp/checkpoints/step_21_ckp.pth"
 
+SPECULATOR_ARGS_BSC_8B="\
+--architecture=paged_llama
+--variant=8b.bsc
+--model_path="/gpfs/bsc_models/"
+--tokenizer_path="/gpfs/bsc_models/tokenizer.model"
+--speculator_path="/gpfs/prangan/ckpts/spanish/checkpoints/step_21001_ckp.pth"
+--model_source=hf
+--prompt_len=64
+--data_path="/gpfs/bsc_data/"
+--subdata="lang=en/dataset=webhose"
+--seed=211
+--n_predict=4
+--n_candidates=5
+--threshes=[6,5,4,3]
+"
+
 DO_BACKGROUND=0
 
 if [ $DO_BACKGROUND -eq 1 ]
@@ -188,5 +204,5 @@ else
     torchrun \
         --nproc_per_node=1 \
         speculator/benchmark_speculator_logical.py \
-        ${SPECULATOR_ARGS_LLAMA2_7B_SPECUV2_TMP}
+        ${SPECULATOR_ARGS_BSC_8B}
 fi
