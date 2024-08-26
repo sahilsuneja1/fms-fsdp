@@ -727,3 +727,17 @@ serialization.register_adapter("embedllama", "hf", _llama_hf_sd_to_fms_sd)
 
 register_model("embedmixtral", "8x7b", _mixtral_factory_factory(MixtralConfig()))
 serialization.register_adapter("embedmixtral", "hf", _mixtral_hf_sd_to_fms_sd)
+
+from fms.models.llama import LLaMAConfig
+_8b_bsc_config = LLaMAConfig(
+    src_vocab_size=256000,
+    emb_dim=4096,
+    norm_eps=1e-6,
+    nheads=32,
+    kvheads=8,
+    nlayers=32,
+    hidden_grow_factor=11008/4096,
+    max_expected_seq_len=8192,
+    rope_theta=10000,
+)
+register_model("embedllama", "llama_bsc_8b", _llama_factory_factory(_8b_bsc_config))

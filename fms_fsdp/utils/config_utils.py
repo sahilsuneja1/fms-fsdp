@@ -40,7 +40,7 @@ def get_model_config(model_variant):
             nlayers=48,
             hidden_grow_factor=22016 / 8192,
             max_expected_seq_len=16384,
-            rope_ratio=1000000.0,
+            rope_theta=1000000.0,
         )
     elif model_variant == "13b":
         llama_config = LLaMAConfig(
@@ -68,7 +68,7 @@ def get_model_config(model_variant):
             hidden_grow_factor=3.5,
             multiple_of=1024,
             max_expected_seq_len=8192,
-            rope_ratio=500000.0,
+            rope_theta=500000.0,
         )
     elif model_variant == "llama3_8b_4k":
         llama_config = LLaMAConfig(
@@ -79,7 +79,7 @@ def get_model_config(model_variant):
             nlayers=32,
             hidden_grow_factor=3.5,
             max_expected_seq_len=4096,
-            rope_ratio=500000.0,
+            rope_theta=500000.0,
         )
     elif model_variant == "llama3_1.8b":
         llama_config = LLaMAConfig(
@@ -90,7 +90,7 @@ def get_model_config(model_variant):
             nlayers=24,
             hidden_grow_factor=3.5,
             max_expected_seq_len=8192,
-            rope_ratio=500000.0,
+            rope_theta=500000.0,
         )
     elif model_variant == "llama3_1.8b_4k":
         llama_config = LLaMAConfig(
@@ -101,7 +101,7 @@ def get_model_config(model_variant):
             nlayers=24,
             hidden_grow_factor=3.5,
             max_expected_seq_len=4096,
-            rope_ratio=500000.0,
+            rope_theta=500000.0,
         )
     elif model_variant == "llama3_70b":
         llama_config = LLaMAConfig(
@@ -114,7 +114,7 @@ def get_model_config(model_variant):
             hidden_grow_factor=3.5,
             multiple_of=4096,
             max_expected_seq_len=8192,
-            rope_ratio=500000.0,
+            rope_theta=500000.0,
         )
     elif model_variant == "llama3_70b_4k":
         llama_config = LLaMAConfig(
@@ -125,7 +125,7 @@ def get_model_config(model_variant):
             nlayers=80,
             hidden_grow_factor=3.5,
             max_expected_seq_len=4096,
-            rope_ratio=500000.0,
+            rope_theta=500000.0,
         )
     else:
         raise ValueError(f"model variant {model_variant} not supported.")

@@ -37,8 +37,9 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF']='expandable_segments:True'
 
 def test_model(rank, model, arch, cfg, prompt_type='chat'):
     print("testing model output")
-    #tokenizer = tokenizers.get_tokenizer(cfg.model_path)
-    tokenizer = tokenizers.get_tokenizer('/gpfs/suneja/models/hub/models--mistralai--Mixtral-8x7B-Instruct-v0.1/snapshots/1e637f2d7cb0a9d6fb1922f305cb784995190a83/tokenizer.model')
+    tokenizer = tokenizers.get_tokenizer(cfg.model_path)
+    #tokenizer = tokenizers.get_tokenizer('/gpfs/suneja/models/hub/models--mistralai--Mixtral-8x7B-Instruct-v0.1/snapshots/1e637f2d7cb0a9d6fb1922f305cb784995190a83/tokenizer.model')
+    #tokenizer = tokenizers.get_tokenizer('/gpfs/bsc_models/tokenizer.model')
     if prompt_type == 'chat':
         template = "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n### Instruction:\n{}\n\n### Response:"
 
@@ -54,7 +55,7 @@ def test_model(rank, model, arch, cfg, prompt_type='chat'):
     else:
         template = "[INST] Write code to solve the following coding problem that obeys the constraints and passes the example test cases. Please wrap your code answer using ```:\n{}\n[/INST]"
         prompt = template.format("Write a bubble sort function in python.")        
-        
+
     tokens = tokenizer.tokenize(prompt)
     ids = tokenizer.convert_tokens_to_ids(tokens)
     if 'llama' in arch:
@@ -130,7 +131,7 @@ def main(**kwargs):
 
     load_HF=False
     manual_FSDP=False
-    do_model_eval=False
+    do_model_eval=True
 
     if load_HF:
         if rank == 0:
@@ -184,6 +185,9 @@ def main(**kwargs):
 
     if rank == 0:
         print(f"{time.time()}")
+        params = sum(p.numel() for p in model.parameters())
+        total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        print(f"\n--> model has {params / 1e6} , {total_params / 1e6} Million params\n")
         print(model.config)
         print(model)
         print("Loading speculator")

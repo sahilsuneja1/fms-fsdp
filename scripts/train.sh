@@ -114,10 +114,10 @@ MODEL_ARGS_LLAMA2_7B="\
 --model_path=/gpfs/suneja/models/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590/
 --model_arch=embedllama
 --model_variant=7b
---ckpt_load_path=/gpfs/suneja/checkpoints/llama2-7b-tmp-2
---ckpt_save_path=/gpfs/suneja/checkpoints/llama2-7b-tmp-2
+--ckpt_load_path=/gpfs/suneja/checkpoints/llama2-7b-tmp-3
+--ckpt_save_path=/gpfs/suneja/checkpoints/llama2-7b-tmp-3
 --logical_shards=768
---sharding_strategy=hsdp
+--sharding_strategy=tp
 --seq_length=4096
 --batch_size=8
 --report_interval=10
@@ -422,6 +422,31 @@ MODEL_ARGS_MIXTRAL="\
 --weights="'1'"
 "
 
+MODEL_ARGS_BSC_TMP="\
+--ckpt_load_path=/gpfs/prangan/ckpts/sbc
+--ckpt_save_path=/gpfs/prangan/ckpts/sbc
+--model_arch=embedllama
+--model_variant=llama_bsc_8b
+--data_path=/gpfs/bsc_data/
+--datasets="'lang=en/dataset=webhose','lang=es/dataset=wikipedia','lang=ca/dataset=web_crawl','lang=gl/dataset=webcrawl','lang=eu/dataset=webcrawl'"
+--logical_shards=768
+--sharding_strategy=fsdp
+--batch_size=2
+--speculator_width=4096
+--seq_length=8192
+--n_speculator_heads=4
+--report_interval=10
+--checkpoint_interval=5000
+--num_steps=21000
+--stage2_start_step=15000
+--use_torch_compile=False
+--learning_rate=1e-3
+--seed=42
+--weights="'1','1','1','1','1'"
+--stage2_batch_size=48
+--model_path=/gpfs/bsc_models/
+"
+
 #export TORCH_LOGS="dynamo,recompiles"
 #export CUDA_LAUNCH_BLOCKING=1
 DO_BACKGROUND=0
@@ -440,7 +465,7 @@ else
     torchrun \
         --nproc_per_node=8 \
         speculator/train_speculator.py \
-        ${MODEL_ARGS_GRANITE_20B}
+        ${MODEL_ARGS_LLAMA2_7B}
 fi        
 
 

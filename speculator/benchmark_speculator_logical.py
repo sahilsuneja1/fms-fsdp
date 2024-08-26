@@ -194,6 +194,7 @@ model = get_model(
     #group=dist.group.WORLD,
     #norm_eps=1e-6,
 )
+print(model)
 decode_model = None
 
 tokenizer = tokenizers.get_tokenizer(args.tokenizer_path)
@@ -214,7 +215,7 @@ elif args.speculator_load_type == "hf_remote":
 else: #args.speculator_load_type == "singlefile": 
     print("loading speculator")
     speculator = MLPSpeculator(
-        model.config.emb_dim, 8192, model.config.src_vocab_size, n_predict=args.n_predict, scale_input=True, tie_weights=True
+        model.config.emb_dim, 4096, model.config.src_vocab_size, n_predict=args.n_predict, scale_input=True, tie_weights=True
         #model.config.emb_dim, 4096, model.config.src_vocab_size-1, n_predict=args.n_predict, scale_input=True #granite-20b-cobol-ptv18
         #model.config.emb_dim, 4096, model.config.src_vocab_size, n_predict=args.n_predict, scale_input=True, tie_weights=True
     )
@@ -232,6 +233,7 @@ if speculator:
 
     speculator = speculator.to(device)
 
+print(speculator)
 print("loading complete on rank", local_rank)
 
 print("initializing paged cache")
@@ -268,6 +270,8 @@ dataset = Streaming_Doc_Dataset(
         args.subdata,
     ],
     seed=args.seed,
+    #min_length=128000+256,
+    #max_chunksize=10_000_000,
     min_length=2148,
     max_chunksize=8192,
 )
@@ -275,6 +279,8 @@ dataset = iter(dataset)
 data = []
 in_middle = False
 print("pulling data to build reusable prompt set")
+#import pdb
+#pdb.set_trace()
 #while len(data) < 5:
 while len(data) < 256:
     chunk = next(dataset)
@@ -284,6 +290,7 @@ while len(data) < 256:
         in_middle = False
     else:
         in_middle = True
+print(len(data[0]))        
 data = torch.IntTensor(data).to(device)
 
 add_special_tokens = tokenizer.bos_token_id != tokenizer.eos_token_id
