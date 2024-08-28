@@ -252,7 +252,7 @@ def main(**kwargs):
         cfg.speculator_width,
         model.config.src_vocab_size,
         cfg.n_speculator_heads,
-        cfg.prompt_length,
+        plen=cfg.prompt_length,
     )
     speculator.reset_parameters()
 
