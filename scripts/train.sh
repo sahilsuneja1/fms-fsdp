@@ -11,6 +11,7 @@ MODEL_ARGS_LLAMA3_8B="\
 --model_variant=llama3_8b
 --ckpt_load_path=/gpfs/suneja/checkpoints/llama3-8b-specu2
 --ckpt_save_path=/gpfs/suneja/checkpoints/llama3-8b-specu2
+--sharding_strategy=tp
 --logical_shards=768
 --seq_length=8192
 --batch_size=1
@@ -19,7 +20,7 @@ MODEL_ARGS_LLAMA3_8B="\
 --num_steps=21000
 --stage2_start_step=15000
 --stage2_batch_size=36
---n_speculator_heads=4
+--n_speculator_heads=2
 --speculator_width=4096
 --data_path=/gpfs/
 --datasets='fineweb-edu'
@@ -177,7 +178,7 @@ then
 else
     torchrun \
         --nproc_per_node=8 \
-        speculator/train_speculator.py \
-        ${MODEL_ARGS_LLAMA2_7B_SPECUV2_TMP}
+        speculator/train_speculator_tp.py \
+        ${MODEL_ARGS_LLAMA3_8B}
 fi
 

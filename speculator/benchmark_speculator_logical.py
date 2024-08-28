@@ -246,7 +246,7 @@ dataset = iter(dataset)
 data = []
 in_middle = False
 print("pulling data to build reusable prompt set")
-#while len(data) < 2:
+#while len(data) < 5:
 while len(data) < 256:
     chunk = next(dataset)
     if not in_middle:

@@ -145,6 +145,7 @@ def stage1_loss(cfg, model, speculator, base_model_input, input, loss_fn, ddp_st
     if cfg.sharding_strategy == 'tp':
         embeds = embeds.chunk(base_model_mesh['tp'].size())[base_model_mesh['tp'].get_local_rank()]        
     losses = speculator(embeds.detach(), input[:, 1:])
+    #print(f"SAHIL tp_rank = {base_model_mesh['tp'].get_local_rank()}, dp_rank = {base_model_mesh['dp'].get_local_rank()}, s_rank = {speculator_mesh.get_local_rank()}, losses.shape = {losses.shape},  losses = {losses}")
     ddp_stats[2 : 2 + losses.size(0)] += losses
     loss = losses.sum()
     return loss, ddp_stats, input.numel()

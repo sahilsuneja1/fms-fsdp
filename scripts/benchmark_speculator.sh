@@ -189,6 +189,7 @@ SPECULATOR_ARGS_BSC_8B="\
 --n_candidates=5
 --threshes=[6,5,4,3]
 "
+#--subdata="lang=es/dataset=wikipedia
 
 DO_BACKGROUND=0
 
