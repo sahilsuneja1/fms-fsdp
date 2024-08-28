@@ -1,5 +1,6 @@
 from typing import List, Tuple, Union
 
+import functools
 import torch
 
 from fms_fsdp.utils.dataset_utils import (
@@ -56,6 +57,10 @@ def get_dummy_loader(cfg, rank, world_size):
     return torch.utils.data.DataLoader(data, batch_size=cfg.batch_size)
 
 
+def truncate_to(x, length=0):
+    return x[:length]
+
+
 def get_data_loader(cfg, rank, world_size, postprocess=[causal_lm]):
     """
     Pytorch dataloader for stateful, distributed, and rescalable causal language model (CLM) training.
@@ -99,9 +104,12 @@ def get_data_loader(cfg, rank, world_size, postprocess=[causal_lm]):
         cfg.eos_token,
         bos_token=cfg.bos_token,
         strip_tokens=set(droplist),
-        min_length=3,
+        min_length=512,
         seed=cfg.seed,
+        max_chunksize=99999999,
     )
+    # Truncate docs to exactly 512
+    data = PreProcessDataset(data, functools.partial(truncate_to, length=512))
     # Add rescaling/resharding
     data = ScalableShardDataset(
         data,
@@ -130,7 +138,7 @@ def get_data_loader(cfg, rank, world_size, postprocess=[causal_lm]):
     # Apply desired postprocessing steps in sequence
     data = PreprocessDataset(data, torch.IntTensor)
     for p in postprocess:
-        data = PreprocessDataset(data, p)
+        data = PreprocessDataset(data, functools.partial(p, prompt_len=128))
     # Enable auto-saving
     data = CheckpointDataset(
         data,
