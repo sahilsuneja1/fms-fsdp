@@ -22,7 +22,7 @@ class train_config:
     tokenizer_path: str = "/fsx/tokenizer"
     vocab_size: int = 32000
     bos_token: Optional[int] = None
-    eos_token: int = 128009
+    eos_token: int = 128001
     bol_token: Optional[int] = None
     eol_token: Optional[int] = None
     strip_tokens: str = ""
