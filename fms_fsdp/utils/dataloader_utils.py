@@ -57,8 +57,10 @@ def get_dummy_loader(cfg, rank, world_size):
     return torch.utils.data.DataLoader(data, batch_size=cfg.batch_size)
 
 
-def truncate_to(x, length=0):
-    return x[:length]
+def truncate_to(x, length=0, eos_token=0):
+    out = x[:length]
+    out[-1] = eos_token
+    return out
 
 
 def get_data_loader(cfg, rank, world_size, postprocess=[causal_lm]):
@@ -104,12 +106,12 @@ def get_data_loader(cfg, rank, world_size, postprocess=[causal_lm]):
         cfg.eos_token,
         bos_token=cfg.bos_token,
         strip_tokens=set(droplist),
-        min_length=512,
+        min_length=cfg.seq_length,
         seed=cfg.seed,
         max_chunksize=99999999,
     )
     # Truncate docs to exactly 512
-    data = PreProcessDataset(data, functools.partial(truncate_to, length=512))
+    data = PreProcessDataset(data, functools.partial(truncate_to, length=cfg.seq_length + 1, eos_token=cfg.eos_token))
     # Add rescaling/resharding
     data = ScalableShardDataset(
         data,
