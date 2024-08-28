@@ -110,14 +110,14 @@ def get_data_loader(cfg, rank, world_size, postprocess=[causal_lm]):
         seed=cfg.seed,
         max_chunksize=99999999,
     )
-    # Truncate docs to exactly 512
-    data = PreProcessDataset(data, functools.partial(truncate_to, length=cfg.seq_length + 1, eos_token=cfg.eos_token))
     # Add rescaling/resharding
     data = ScalableShardDataset(
         data,
         cfg.eos_token,
         n_logical_shards=cfg.logical_shards,
     )
+    # Truncate docs to exactly 512
+    data = PreprocessDataset(data, functools.partial(truncate_to, length=cfg.seq_length, eos_token=cfg.eos_token))
     # Add multi-dataset handling
     data = SamplingDataset(
         cfg.data_path,

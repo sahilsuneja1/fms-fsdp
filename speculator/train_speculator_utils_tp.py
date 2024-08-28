@@ -142,6 +142,8 @@ def stage1_loss(cfg, model, speculator, base_model_input, input, loss_fn, ddp_st
             include_embeds=True,
             use_cache=False,
         )
+    #if base_model_mesh['tp'].get_local_rank() == 0:
+    #    print(base_model_input[0].tolist())
     if cfg.sharding_strategy == 'tp':
         embeds = embeds.chunk(base_model_mesh['tp'].size())[base_model_mesh['tp'].get_local_rank()]        
     losses = speculator(embeds.detach(), input[:, 1:])
@@ -271,6 +273,8 @@ def train_speculator(
     elapsed_tokens = 0
     train_loss = 5.0
     for batch_idx, input in enumerate(train_loader, start=start_step + 1):
+        if batch_idx > 10:
+            exit(0)
         if batch_idx > cfg.num_steps:
             break
         input = input.to(local_rank)

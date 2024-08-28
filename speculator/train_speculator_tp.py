@@ -45,7 +45,7 @@ llama_3_8b_config = LLaMAConfig(
     hidden_grow_factor=3.5,
     multiple_of=1024,
     max_expected_seq_len=8192,
-    rope_ratio=500000.0,
+    rope_theta=500000.0,
 )
 
 llama_3_70b_config = LLaMAConfig(
@@ -58,7 +58,7 @@ llama_3_70b_config = LLaMAConfig(
     hidden_grow_factor=3.5,
     multiple_of=4096,
     max_expected_seq_len=8192,
-    rope_ratio=500000.0,
+    rope_theta=500000.0,
 )
 
 llama_3_405b_config = LLaMAConfig(
@@ -71,7 +71,7 @@ llama_3_405b_config = LLaMAConfig(
     hidden_grow_factor=53248/16384,
     multiple_of=4096,
     max_expected_seq_len=16384,
-    rope_ratio=500000.0,
+    rope_theta=500000.0,
 )
 
 
@@ -162,11 +162,11 @@ def main(**kwargs):
         base_model_mesh = None
         speculator_mesh = None
     else:
-        #base_model_mesh = setup(dp=world_size//32, tp=32)
-        #speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (world_size,))
+        base_model_mesh = setup(dp=world_size//32, tp=32)
+        speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (world_size,))
         #base_model_mesh = setup(dp=2, tp=4) #simulated multi node in a single node
-        base_model_mesh = setup(dp=1, tp=8) #simulated multi node in a single node
-        speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (8,))
+        #base_model_mesh = setup(dp=1, tp=8) #simulated multi node in a single node
+        #speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (8,))
         torch._C._distributed_c10d._register_process_group("default", base_model_mesh['tp'].get_group())
         #fms.distributed.tensorparallel.TP_MESH = base_model_mesh['tp']
 
@@ -326,7 +326,7 @@ def main(**kwargs):
         checkpointer = Checkpointer(cfg.ckpt_save_path, 1000, "ddp", speculator_mesh.get_rank(), speculator_mesh.get_local_rank(), model_auto_placement=True)
     else:
         checkpointer = Checkpointer(cfg.ckpt_save_path, 1000, "ddp", rank, local_rank)
-    speculator, optimizer, train_loader, start_step, tokens_seen = checkpointer.load(
+    speculator, optimizer, train_loader, start_step, tokens_seen, _ = checkpointer.load(
         speculator,
         optimizer,
         train_loader,

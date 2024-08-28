@@ -146,7 +146,6 @@ MODEL_ARGS_LLAMA3_405B="\
 --ckpt_save_path=/gpfs/suneja/checkpoints/llama3-405b
 --logical_shards=768
 --sharding_strategy=tp
---seq_length=16384
 --batch_size=8
 --report_interval=10
 --checkpoint_interval=5000
@@ -161,6 +160,30 @@ MODEL_ARGS_LLAMA3_405B="\
 --datasets="'fineweb-edu'"
 --seed=42
 --weights="'1'"
+"
+#--seq_length=16384
+
+MODEL_ARGS_LLAMA3_8B_TMP="\
+--model_path=/gpfs/llama3/hf/8b_instruction_tuned
+--model_arch=embedllama
+--model_variant=llama3_8b
+--ckpt_load_path=/gpfs/suneja/checkpoints/llama3-8b-specu2-tmp
+--ckpt_save_path=/gpfs/suneja/checkpoints/llama3-8b-specu2-tmp
+--sharding_strategy=tp
+--logical_shards=768
+--batch_size=1
+--report_interval=10
+--checkpoint_interval=3000
+--num_steps=15000
+--stage2_start_step=15000
+--stage2_batch_size=36
+--n_speculator_heads=2
+--speculator_width=4096
+--data_path=/gpfs/405b_tokens/
+--datasets='stitched'
+--weights='1'
+--low_cpu_fsdp=False
+--use_torch_compile=False
 "
 
 DO_BACKGROUND=0
@@ -179,6 +202,6 @@ else
     torchrun \
         --nproc_per_node=8 \
         speculator/train_speculator_tp.py \
-        ${MODEL_ARGS_LLAMA3_8B}
+        ${MODEL_ARGS_LLAMA3_8B_TMP}
 fi
 
