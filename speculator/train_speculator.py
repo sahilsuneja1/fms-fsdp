@@ -313,10 +313,10 @@ def main(**kwargs):
 
     # optionally load from checkpoint (when continue pretraining)
     checkpointer = Checkpointer(cfg.ckpt_save_path, 1000, "ddp", rank, local_rank)
-    speculator, optimizer, train_loader, start_step, tokens_seen = checkpointer.load(
+    speculator, optimizer, _, start_step, tokens_seen = checkpointer.load(
         speculator,
         optimizer,
-        train_loader,
+        None,
         path=os.path.join(cfg.ckpt_load_path, "checkpoints/"),
     )
 
