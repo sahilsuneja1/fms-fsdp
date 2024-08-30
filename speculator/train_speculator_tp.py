@@ -327,10 +327,12 @@ def main(**kwargs):
         checkpointer = Checkpointer(cfg.ckpt_save_path, 1000, "ddp", speculator_mesh.get_rank(), speculator_mesh.get_local_rank(), model_auto_placement=True)
     else:
         checkpointer = Checkpointer(cfg.ckpt_save_path, 1000, "ddp", rank, local_rank)
-    speculator, optimizer, train_loader, start_step, tokens_seen, _ = checkpointer.load(
+    #speculator, optimizer, train_loader, start_step, tokens_seen, _ = checkpointer.load(
+    speculator, optimizer, _, start_step, tokens_seen, _ = checkpointer.load(
         speculator,
         optimizer,
-        train_loader,
+        #train_loader,
+        None,
         path=os.path.join(cfg.ckpt_load_path, "checkpoints/"),
         is_compiled=cfg.use_torch_compile,
     )

@@ -347,7 +347,8 @@ def train_speculator(
                 batch_idx,
                 speculator,
                 optimizer,
-                train_loader,
+                #train_loader,
+                None,
                 tokens_seen=elapsed_tokens + n_tok,
             )
             torch.cuda.empty_cache()
