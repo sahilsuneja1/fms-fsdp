@@ -273,8 +273,6 @@ def train_speculator(
     elapsed_tokens = 0
     train_loss = 5.0
     for batch_idx, input in enumerate(train_loader, start=start_step + 1):
-        if batch_idx > 10:
-            exit(0)
         if batch_idx > cfg.num_steps:
             break
         input = input.to(local_rank)
@@ -297,7 +295,7 @@ def train_speculator(
             )
 
         loss.backward()
-        #ddp_stats[0] += speculator.clip_grad_norm_(cfg.grad_clip_thresh).item()
+        ddp_stats[0] += speculator.clip_grad_norm_(cfg.grad_clip_thresh).item()
         optimizer.step()
         scheduler.step()
 

@@ -162,11 +162,11 @@ def main(**kwargs):
         base_model_mesh = None
         speculator_mesh = None
     else:
-        #base_model_mesh = setup(dp=world_size//32, tp=32)
-        #speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (world_size,))
+        base_model_mesh = setup(dp=world_size//32, tp=32)
+        speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (world_size,))
         #base_model_mesh = setup(dp=2, tp=4) #simulated multi node in a single node
-        base_model_mesh = setup(dp=1, tp=8) #simulated multi node in a single node
-        speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (8,))
+        #base_model_mesh = setup(dp=1, tp=8) #simulated multi node in a single node
+        #speculator_mesh = dist.device_mesh.init_device_mesh('cuda', (8,))
         torch._C._distributed_c10d._register_process_group("default", base_model_mesh['tp'].get_group())
         #fms.distributed.tensorparallel.TP_MESH = base_model_mesh['tp']
 
