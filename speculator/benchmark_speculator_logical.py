@@ -191,6 +191,7 @@ model = get_model(
     source=args.model_source,
     #distributed_strategy=distr_param,
     #distributed_strategy="fsdp",
+    #distributed_strategy="tp",
     #group=dist.group.WORLD,
     #norm_eps=1e-6,
 )
@@ -255,7 +256,7 @@ kv_cache_manager = PagedKVCacheManager(
     tensor_parallel_size=dist.get_world_size() if args.distributed else 1,
     dtype=torch.get_default_dtype(),
     device=device,
-    total_num_gpu_blocks=2000,
+    #total_num_gpu_blocks=2000,
 )
 print("cache initialization complete on rank", local_rank)
 
@@ -281,8 +282,8 @@ in_middle = False
 print("pulling data to build reusable prompt set")
 #import pdb
 #pdb.set_trace()
-#while len(data) < 5:
-while len(data) < 256:
+while len(data) < 2:
+#while len(data) < 256:
     chunk = next(dataset)
     if not in_middle:
         data.append(chunk[: args.prompt_len])
@@ -328,6 +329,7 @@ def infer(ids, k, warmup, model, decode_model, speculator):
     # There is currently a bug in start_pos for batched rotary embeddings that can lead
     # varying results for the same prompt.
     max_seq_len = model.config.max_expected_seq_len if hasattr(model.config, "max_expected_seq_len") else model.config.max_pos
+    print(max_seq_len)
 
     #if k != 0:
     if k != 0 and speculator is not None:
@@ -361,7 +363,7 @@ def infer(ids, k, warmup, model, decode_model, speculator):
     if not warmup:
         total_tokens = 0
         for i in range(len(result)):
-            #print_result(result[i], ids[i], n_steps)
+            print_result(result[i], ids[i], n_steps)
             total_tokens += len(result[i]) - len(ids[i])
         avg_tokens = total_tokens / len(result)
         return generated_token_time_out / avg_tokens, avg_tokens / n_steps

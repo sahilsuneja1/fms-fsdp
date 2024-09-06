@@ -131,7 +131,7 @@ def main(**kwargs):
 
     load_HF=False
     manual_FSDP=False
-    do_model_eval=True
+    do_model_eval=False
 
     if load_HF:
         if rank == 0:

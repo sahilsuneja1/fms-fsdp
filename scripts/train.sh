@@ -447,6 +447,31 @@ MODEL_ARGS_BSC_TMP="\
 --model_path=/gpfs/bsc_models/
 "
 
+MODEL_ARGS_GRANITE_20B_MULTILINGUAL="\
+--model_arch=embedgpt_bigcode
+--model_variant=20b
+--model_path="/gpfs/suneja/models/dmf_models/granite-20b-multilingual-instruct-20240130"
+--ckpt_load_path=/gpfs/suneja/checkpoints/granite-20b-multilingual
+--ckpt_save_path=/gpfs/suneja/checkpoints/granite-20b-multilingual
+--data_path=/gpfs1/users/suneja/datasets/bpv7_starcoder/lang=en
+--logical_shards=768
+--sharding_strategy=tp
+--seq_length=8192
+--batch_size=1
+--report_interval=10
+--checkpoint_interval=5000
+--num_steps=21000
+--stage2_start_step=15000
+--stage2_batch_size=48
+--n_speculator_heads=5
+--speculator_width=6144
+--use_torch_compile=False
+--learning_rate=1e-3
+--seed=42
+--datasets='dataset=commoncrawl'
+--weights="'1'"
+"
+
 #export TORCH_LOGS="dynamo,recompiles"
 #export CUDA_LAUNCH_BLOCKING=1
 DO_BACKGROUND=0
@@ -465,7 +490,7 @@ else
     torchrun \
         --nproc_per_node=8 \
         speculator/train_speculator.py \
-        ${MODEL_ARGS_LLAMA2_7B}
+        ${MODEL_ARGS_GRANITE_20B_MULTILINGUAL}
 fi        
 
 

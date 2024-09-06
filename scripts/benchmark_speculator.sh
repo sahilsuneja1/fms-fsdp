@@ -77,15 +77,16 @@ SPECULATOR_ARGS_GRANITE_8B_HF="\
 --variant=calico.8b.128k.code
 --model_path="/gpfs/suneja/models/hub/models--ibm-granite--granite-8b-code-base-128k/snapshots/5fa5ac8bc21dab21133b34854f42de9631ca9cf5"
 --tokenizer_path="/gpfs/suneja/models/hub/models--ibm-granite--granite-8b-code-base-128k/snapshots/5fa5ac8bc21dab21133b34854f42de9631ca9cf5"
---speculator_path="/gpfs/suneja/models/granite-8b-code-instruct-accelerator"
 --speculator_load_type=hf_remote
 --model_source=hf
---prompt_len=32000
+--prompt_len=64000
 --data_path="/gpfs/suneja/datasets/bluepile-granite/"
 --subdata="lang=en/dataset=github_clean"
 --threshes=[6,5,4,3,3]
+--n_candidates=1
 --seed=211
 "
+#--speculator_path="/gpfs/suneja/models/granite-8b-code-instruct-accelerator"
 #--prompt_len=64
 #--model_path="/gpfs/users/suneja/models/granite-8b-code-base"
 #--tokenizer_path="/gpfs/users/suneja/models/granite-8b-code-base"
@@ -240,10 +241,9 @@ SPECULATOR_ARGS_GRANITE20B_COBOL_PTV18="\
 SPECULATOR_ARGS_LLAMA3_8B_HF="\
 --architecture=paged_llama
 --variant=llama3.8b
---model_path="/gpfs/suneja/models/hub/models--meta-llama--Meta-Llama-3.1-8B-Instruct/snapshots/8c22764a7e3675c50d4c7c9a4edb474456022b16"
---tokenizer_path="/gpfs/suneja/models/hub/models--meta-llama--Meta-Llama-3.1-8B-Instruct/snapshots/8c22764a7e3675c50d4c7c9a4edb474456022b16"
+--model_path="/gpfs/llama3/hf/8b_instruction_tuned"
+--tokenizer_path="/gpfs/llama3/hf/8b_instruction_tuned"
 --model_source=hf
---speculator_path="/gpfs/suneja/models/llama3-8b-accelerator"
 --speculator_load_type=hf_remote
 --prompt_len=64
 --data_path="/gpfs/suneja/datasets/llama3-common-crawl/rel0_7/lang=en"
@@ -253,6 +253,7 @@ SPECULATOR_ARGS_LLAMA3_8B_HF="\
 --threshes=[6,4,3,3]
 --seed=211
 "
+#--speculator_path="/gpfs/suneja/models/llama3-8b-accelerator"
 #--model_path=/gpfs/suneja/models/dmf_models/llama-3-8b-instruct-20240418
 #--tokenizer_path=/gpfs/suneja/models/dmf_models/llama-3-8b-instruct-20240418
 
@@ -463,9 +464,9 @@ then
         ${SPECULATOR_ARGS_LLAMA3_70B_SPECU2_CONVERTED_HF} \
         > nohup.out &
 else
-    export CUDA_VISIBLE_DEVICES=4
+    #export CUDA_VISIBLE_DEVICES=4
     torchrun \
-        --nproc_per_node=1 \
-        speculator/benchmark_speculator_logical.py \
-        ${SPECULATOR_ARGS_BSC_8B_HF}
+        --nproc_per_node=8 \
+        speculator/benchmark_speculator_logical_tp.py \
+        ${SPECULATOR_ARGS_LLAMA3_8B_HF}
 fi
