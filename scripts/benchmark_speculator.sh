@@ -244,6 +244,7 @@ SPECULATOR_ARGS_LLAMA3_8B_HF="\
 --model_path="/gpfs/llama3/hf/8b_instruction_tuned"
 --tokenizer_path="/gpfs/llama3/hf/8b_instruction_tuned"
 --model_source=hf
+--speculator_path="/gpfs/suneja/models/llama3-8b-accelerator"
 --speculator_load_type=hf_remote
 --prompt_len=64
 --data_path="/gpfs/suneja/datasets/llama3-common-crawl/rel0_7/lang=en"
@@ -253,7 +254,6 @@ SPECULATOR_ARGS_LLAMA3_8B_HF="\
 --threshes=[6,4,3,3]
 --seed=211
 "
-#--speculator_path="/gpfs/suneja/models/llama3-8b-accelerator"
 #--model_path=/gpfs/suneja/models/dmf_models/llama-3-8b-instruct-20240418
 #--tokenizer_path=/gpfs/suneja/models/dmf_models/llama-3-8b-instruct-20240418
 
@@ -454,7 +454,27 @@ SPECULATOR_ARGS_BSC_8B_HF="\
 #--tokenizer_path="/gpfs/bsc_models/tokenizer.model"
 
 
+SPECULATOR_ARGS_LLAMA3_8B_HF_TP="\
+--architecture=paged_llama
+--variant=llama3.8b
+--model_path="/gpfs/llama3/hf/8b_instruction_tuned"
+--tokenizer_path="/gpfs/llama3/hf/8b_instruction_tuned"
+--model_source=hf
+--speculator_path="/gpfs/suneja/models/llama3-8b-accelerator"
+--speculator_load_type=hf_remote
+--prompt_len=64
+--data_path="/gpfs/suneja/datasets/llama3-common-crawl/rel0_7/lang=en"
+--subdata="'dataset=commoncrawl'"
+--n_predict=4
+--n_candidates=5
+--threshes=[6,4,3,3]
+--seed=211
+--distributed
+"
+
+
 DO_BACKGROUND=0
+TP=1
 
 if [ $DO_BACKGROUND -eq 1 ]
 then
@@ -464,9 +484,17 @@ then
         ${SPECULATOR_ARGS_LLAMA3_70B_SPECU2_CONVERTED_HF} \
         > nohup.out &
 else
-    #export CUDA_VISIBLE_DEVICES=4
-    torchrun \
-        --nproc_per_node=8 \
-        speculator/benchmark_speculator_logical_tp.py \
-        ${SPECULATOR_ARGS_LLAMA3_8B_HF}
+    if [ $TP -eq 1 ]
+    then
+        torchrun \
+            --nproc_per_node=8 \
+            speculator/benchmark_speculator_logical_tp.py \
+            ${SPECULATOR_ARGS_LLAMA3_8B_HF_TP}
+    else        
+        export CUDA_VISIBLE_DEVICES=4
+        torchrun \
+            #--nproc_per_node=8 \
+            speculator/benchmark_speculator_logical.py \
+            ${SPECULATOR_ARGS_LLAMA3_8B_HF}
+    fi
 fi
