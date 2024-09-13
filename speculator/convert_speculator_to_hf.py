@@ -168,7 +168,22 @@ def get_speculator_info_bsc_8b_specu2_to_specu1():
     return path, name, config, base_model_hf_repo
 
 
-path, name, config, base_model_hf_repo = get_speculator_info_bsc_8b_specu2_to_specu1()
+def get_speculator_info_llama3_405b_specu2_to_specu1():
+    path = "/gpfs/suneja/checkpoints/llama3-405b-specu12k-1024/checkpoints/step_6001_ckp_specu_v1.pth" 
+    name = "llama3.405b.3.5b"
+    config = {
+        "emb_dim": 16384,
+        "vocab_size": 128256,
+        "n_predict": 4,
+        "inner_dim": 12288,
+        "scale_input": True,
+        "tie_weights": True
+    }
+    base_model_hf_repo="/gpfs/llama3_405b_instruct"
+    return path, name, config, base_model_hf_repo
+
+
+path, name, config, base_model_hf_repo = get_speculator_info_llama3_405b_specu2_to_specu1()
 path = register_speculator(path, name, config)
 convert_speculator(path, name, config, base_model_hf_repo)
 

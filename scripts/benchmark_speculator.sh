@@ -472,6 +472,24 @@ SPECULATOR_ARGS_LLAMA3_8B_HF_TP="\
 --distributed
 "
 
+SPECULATOR_ARGS_LLAMA3_405B_HF_TP="\
+--architecture=paged_llama
+--variant=llama3.405b
+--model_path="/gpfs/llama3_405b_instruct/"
+--tokenizer_path="/gpfs/llama3_405b_instruct/"
+--model_source=hf
+--speculator_path="/gpfs/suneja/checkpoints/llama3-405b-specu12k-1024/checkpoints/llama3_405b_instruct/accelerator/"
+--speculator_load_type=hf_remote
+--prompt_len=64
+--data_path="/gpfs/suneja/datasets/llama3-common-crawl/rel0_7/lang=en"
+--subdata="'dataset=commoncrawl'"
+--n_predict=4
+--n_candidates=5
+--threshes=[6,4,3,3]
+--seed=211
+--distributed
+"
+
 
 DO_BACKGROUND=0
 TP=1

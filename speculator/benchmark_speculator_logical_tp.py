@@ -169,16 +169,8 @@ if args.deterministic:
     torch.use_deterministic_algorithms(True)
 
 if args.distributed:
-    #dist.init_process_group()
-    #torch._C._distributed_c10d._register_process_group("default", dist.group.WORLD)
-    tp_size = 8
-    base_model_mesh = dist.device_mesh.init_device_mesh(
-        "cuda", (world_size // tp_size, tp_size), mesh_dim_names=("dp", "tp")
-    )
-    speculator_mesh = dist.device_mesh.init_device_mesh("cuda", (world_size,))
-    torch._C._distributed_c10d._register_process_group(
-        "default", base_model_mesh["tp"].get_group()
-    )
+    dist.init_process_group()
+    torch._C._distributed_c10d._register_process_group("default", dist.group.WORLD)
 
 print("loading model")
 if args.distributed:
@@ -197,8 +189,7 @@ model = get_model(
     device_type=args.device_type,
     source=args.model_source,
     distributed_strategy=distr_param,
-    #group=dist.group.WORLD,
-    group=base_model_mesh['tp'].get_group() if distr_param == 'tp' else None,
+    group=dist.group.WORLD,
 )
 print(model)
 decode_model = None
@@ -287,8 +278,8 @@ in_middle = False
 print("pulling data to build reusable prompt set")
 #import pdb
 #pdb.set_trace()
-while len(data) < 2:
-#while len(data) < 256:
+#while len(data) < 2:
+while len(data) < 256:
     chunk = next(dataset)
     if not in_middle:
         data.append(chunk[: args.prompt_len])
@@ -368,7 +359,7 @@ def infer(ids, k, warmup, model, decode_model, speculator):
     if not warmup:
         total_tokens = 0
         for i in range(len(result)):
-            print_result(result[i], ids[i], n_steps)
+            #print_result(result[i], ids[i], n_steps)
             total_tokens += len(result[i]) - len(ids[i])
         avg_tokens = total_tokens / len(result)
         return generated_token_time_out / avg_tokens, avg_tokens / n_steps
