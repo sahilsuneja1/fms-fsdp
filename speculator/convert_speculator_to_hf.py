@@ -183,7 +183,22 @@ def get_speculator_info_llama3_405b_specu2_to_specu1():
     return path, name, config, base_model_hf_repo
 
 
-path, name, config, base_model_hf_repo = get_speculator_info_llama3_405b_specu2_to_specu1()
+def get_speculator_info_allam():
+    path = "/gpfs/prangan/ckpts/arabic/checkpoints/step_21001_ckp.pth"
+    name = "allama.13b.2.6b"
+    config = {
+        "emb_dim": 5120,
+        "vocab_size": 61696,
+        "n_predict": 4,
+        "inner_dim": 5120,
+        "scale_input": True,
+        "tie_weights": False
+    }
+    base_model_hf_repo="/gpfs/suneja/models/dmf_models/allam-1-13b-instruct-20240607"
+    return path, name, config, base_model_hf_repo
+
+
+path, name, config, base_model_hf_repo = get_speculator_info_allam()
 path = register_speculator(path, name, config)
 convert_speculator(path, name, config, base_model_hf_repo)
 

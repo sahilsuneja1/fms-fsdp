@@ -58,8 +58,8 @@ def test_model(rank, model, arch, cfg, prompt_type='chat'):
 
     tokens = tokenizer.tokenize(prompt)
     ids = tokenizer.convert_tokens_to_ids(tokens)
-    if 'llama' in arch:
-        ids = [tokenizer.bos_token_id] + ids
+    #if 'llama' in arch:
+    #    ids = [tokenizer.bos_token_id] + ids
     ids = torch.tensor(ids, dtype=torch.long, device="cuda")
     print("calling generate")
     result = generation.generate(
@@ -223,7 +223,7 @@ def main(**kwargs):
         #tie_emb=True,
         #tie_head=True,
         #tie_transition=True,
-        #tie_weights=True,
+        tie_weights=True,
         scale_input=True,
     )
     speculator.reset_parameters()

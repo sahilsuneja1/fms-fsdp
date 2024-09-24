@@ -216,7 +216,7 @@ elif args.speculator_load_type == "hf_remote":
 else: #args.speculator_load_type == "singlefile": 
     print("loading speculator")
     speculator = MLPSpeculator(
-        model.config.emb_dim, 4096, model.config.src_vocab_size, n_predict=args.n_predict, scale_input=True, tie_weights=True
+        model.config.emb_dim, 5120, model.config.src_vocab_size, n_predict=args.n_predict, scale_input=True, tie_weights=False
         #model.config.emb_dim, 4096, model.config.src_vocab_size-1, n_predict=args.n_predict, scale_input=True #granite-20b-cobol-ptv18
         #model.config.emb_dim, 4096, model.config.src_vocab_size, n_predict=args.n_predict, scale_input=True, tie_weights=True
     )
@@ -282,8 +282,8 @@ in_middle = False
 print("pulling data to build reusable prompt set")
 #import pdb
 #pdb.set_trace()
-while len(data) < 2:
-#while len(data) < 256:
+#while len(data) < 2:
+while len(data) < 100:
     chunk = next(dataset)
     if not in_middle:
         data.append(chunk[: args.prompt_len])
@@ -363,7 +363,7 @@ def infer(ids, k, warmup, model, decode_model, speculator):
     if not warmup:
         total_tokens = 0
         for i in range(len(result)):
-            print_result(result[i], ids[i], n_steps)
+            #print_result(result[i], ids[i], n_steps)
             total_tokens += len(result[i]) - len(ids[i])
         avg_tokens = total_tokens / len(result)
         return generated_token_time_out / avg_tokens, avg_tokens / n_steps

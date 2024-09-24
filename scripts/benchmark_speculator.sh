@@ -250,10 +250,12 @@ SPECULATOR_ARGS_LLAMA3_8B_HF="\
 --data_path="/gpfs/suneja/datasets/llama3-common-crawl/rel0_7/lang=en"
 --subdata="'dataset=commoncrawl'"
 --n_predict=4
---n_candidates=5
---threshes=[6,4,3,3]
+--n_candidates=1
+--threshes=[1,1,1,1]
 --seed=211
 "
+#--n_candidates=5
+#--threshes=[6,4,3,3]
 #--model_path=/gpfs/suneja/models/dmf_models/llama-3-8b-instruct-20240418
 #--tokenizer_path=/gpfs/suneja/models/dmf_models/llama-3-8b-instruct-20240418
 
@@ -491,8 +493,60 @@ SPECULATOR_ARGS_LLAMA3_405B_HF_TP="\
 "
 
 
+SPECULATOR_ARGS_ALLAM="\
+--architecture=paged_llama
+--variant=allam
+--model_path="/gpfs/suneja/models/dmf_models/allam-1-13b-instruct-20240607"
+--tokenizer_path="/gpfs/suneja/models/dmf_models/allam-1-13b-instruct-20240607"
+--speculator_path="/gpfs/prangan/ckpts/arabic/checkpoints/step_21001_ckp.pth"
+--model_source=hf
+--prompt_len=64
+--data_path="/gpfs/prangan/datasets/arabic/tokens_rename"
+--subdata="lang=ar"
+--seed=2101
+--n_predict=4
+--n_candidates=5
+--threshes=[6,5,4,3]
+"
+
+SPECULATOR_ARGS_ALLAM_HF="\
+--architecture=paged_llama
+--variant=allam
+--model_path="/gpfs/suneja/models/dmf_models/allam-1-13b-instruct-20240607"
+--tokenizer_path="/gpfs/suneja/models/dmf_models/allam-1-13b-instruct-20240607"
+--speculator_path="/gpfs/prangan/ckpts/arabic/checkpoints/allam-1-13b-instruct-20240607/accelerator/"
+--speculator_load_type=hf_remote
+--model_source=hf
+--prompt_len=64
+--data_path="/gpfs/prangan/datasets/arabic/tokens_rename"
+--subdata="lang=en"
+--seed=2101
+--n_predict=4
+--n_candidates=5
+--threshes=[6,5,4,3]
+"
+
+SPECULATOR_ARGS_LLAMA3_1_8B_HF="\
+--architecture=paged_llama
+--variant=llama3.1.8b
+--model_path="/gpfs/suneja/models/Meta-Llama-3.1-8B-Instruct"
+--tokenizer_path="/gpfs/suneja/models/Meta-Llama-3.1-8B-Instruct"
+--model_source=hf
+--speculator_path="/gpfs/suneja/models/llama3-8b-accelerator"
+--speculator_load_type=hf_remote
+--prompt_len=64
+--data_path="/gpfs/suneja/datasets/llama3-common-crawl/rel0_7/lang=en"
+--subdata="'dataset=commoncrawl'"
+--n_predict=4
+--n_candidates=1
+--threshes=[1,1,1,1]
+--seed=211
+"
+#--n_candidates=5
+#--threshes=[6,4,3,3]
+
 DO_BACKGROUND=0
-TP=1
+TP=0
 
 if [ $DO_BACKGROUND -eq 1 ]
 then
@@ -511,7 +565,6 @@ else
     else        
         export CUDA_VISIBLE_DEVICES=4
         torchrun \
-            #--nproc_per_node=8 \
             speculator/benchmark_speculator_logical.py \
             ${SPECULATOR_ARGS_LLAMA3_8B_HF}
     fi

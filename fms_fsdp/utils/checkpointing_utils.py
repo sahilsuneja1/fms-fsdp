@@ -210,14 +210,20 @@ class Checkpointer:
             else:
                 # Load model
                 with FSDP.state_dict_type(model, StateDictType.SHARDED_STATE_DICT):
-                    state_dict = model.state_dict()
+                    if 'is_compiled' in kwargs.keys() and kwargs['is_compiled'] is True:
+                        state_dict = model._orig_mod.state_dict()
+                    else:
+                        state_dict = model.state_dict()                
                     model_ckp = {"model_state": state_dict}
                     load_state_dict(
                         state_dict=model_ckp,
                         storage_reader=FileSystemReader(load_path),
                         planner=DefaultLoadPlanner(),
                     )
-                    model.load_state_dict(model_ckp["model_state"])
+                    if 'is_compiled' in kwargs.keys() and kwargs['is_compiled'] is True:
+                        model._orig_mod.load_state_dict(model_ckp["model_state"])
+                    else:
+                        model.load_state_dict(model_ckp["model_state"])                    
                
                 if self.model_auto_placement:
                     model.to('cuda')
@@ -238,12 +244,14 @@ class Checkpointer:
                     optim_load_time = time.time()
                     with FSDP.state_dict_type(model, StateDictType.SHARDED_STATE_DICT):
                         optim_state = load_sharded_optimizer_state_dict(
-                            model_state_dict=model.state_dict(),
+                            model_state_dict=model.state_dict() if 'is_compiled' not in kwargs.keys() or kwargs['is_compiled'] is False else model._orig_mod.state_dict(),
                             optimizer_key="optimizer_state",
                             storage_reader=FileSystemReader(load_path),
                         )
                     flattened_osd = FSDP.optim_state_dict_to_load(
-                        model, optimizer, optim_state["optimizer_state"]
+                        model if 'is_compiled' not in kwargs.keys() or kwargs['is_compiled'] is False else model._orig_mod,
+                        optimizer,
+                        optim_state["optimizer_state"]
                     )
                     optimizer.load_state_dict(flattened_osd)
                     self.report(optimizer_load_time=time.time() - optim_load_time)

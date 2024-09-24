@@ -472,6 +472,34 @@ MODEL_ARGS_GRANITE_20B_MULTILINGUAL="\
 --weights="'1'"
 "
 
+
+MODEL_ARGS_GRANITE_8B_INSTRUCT="\
+--ckpt_load_path=/gpfs/suneja/checkpoints/granite-8b-instruct
+--ckpt_save_path=/gpfs/suneja/checkpoints/granite-8b-instruct
+--model_path=/gpfs/suneja/models/dmf_models/granite-8b-instruct-preview-4k-r240917a
+--data_path=/gpfs/suneja/datasets/bp7_gpt2tokenizer/lang=en/
+--model_arch=embedgranite
+--model_variant=8b
+--logical_shards=768
+--sharding_strategy=fsdp
+--batch_size=1
+--speculator_width=4096
+--seq_length=8192
+--n_speculator_heads=4
+--report_interval=10
+--checkpoint_interval=3000
+--num_steps=21000
+--stage2_start_step=15000
+--stage2_batch_size=96
+--use_torch_compile=True
+--learning_rate=1e-3
+--seed=42
+--datasets="'dataset=commoncrawl'"
+--weights="'1'"
+"
+#--model_arch=embedllama
+#--model_variant=granite.8b.instruct
+
 #export TORCH_LOGS="dynamo,recompiles"
 #export CUDA_LAUNCH_BLOCKING=1
 DO_BACKGROUND=0
@@ -490,7 +518,7 @@ else
     torchrun \
         --nproc_per_node=8 \
         speculator/train_speculator.py \
-        ${MODEL_ARGS_GRANITE_20B_MULTILINGUAL}
+        ${MODEL_ARGS_GRANITE_8B_INSTRUCT}
 fi        
 
 

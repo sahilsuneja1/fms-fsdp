@@ -11,6 +11,8 @@ from fms.models.gpt_bigcode import GPTBigCode, GPTBigCodeConfig
 from fms.models.gpt_bigcode import _hf_sd_to_fms_sd as _gptbigcode_hf_sd_to_fms_sd
 from fms.models.llama import LLaMA
 from fms.models.llama import _hf_sd_to_fms_sd as _llama_hf_sd_to_fms_sd
+from fms.models.granite import Granite
+from fms.models.granite import _hf_sd_to_fms_sd as _granite_hf_sd_to_fms_sd
 from fms.models.mixtral import Mixtral, MixtralConfig
 from fms.models.mixtral import _hf_sd_to_fms_sd as _mixtral_hf_sd_to_fms_sd
 from fms_extras.models.calico import Calico, CalicoConfig
@@ -144,11 +146,13 @@ def stage1_loss(cfg, model, speculator, base_model_input, input, loss_fn, ddp_st
     Returns: scalar loss value, updated ddp stats, number of tokens in input
     """
     with torch.no_grad():
-        _, embeds = model(
+        #_, embeds = model(
+        out, embeds = model(
             base_model_input[:, : -speculator.n_predict - 1],
             include_embeds=True,
             use_cache=False,
         )
+
     if cfg.sharding_strategy == 'tp':
         embeds = embeds.chunk(base_model_mesh['tp'].size())[base_model_mesh['tp'].get_local_rank()]
 
@@ -204,6 +208,11 @@ def stage2_loss(cfg, model, speculator, base_model_input, input, loss_fn, ddp_st
             use_cache=True,
             include_embeds=True,
         )
+        #if rank == 0:
+        #    torch.set_printoptions(profile="full")
+        #    print(f"INPUT: {base_model_input}")
+        #    print(f"OUTPUT: {targs}")
+        #    torch.set_printoptions(profile="default")
 
         if cfg.sharding_strategy == 'tp':
             targs = targs.chunk(base_model_mesh['tp'].size())[base_model_mesh['tp'].get_local_rank()]
@@ -322,7 +331,7 @@ def train_speculator(
             )
 
         loss.backward()
-        #ddp_stats[0] += speculator.clip_grad_norm_(cfg.grad_clip_thresh).item()
+        ddp_stats[0] += speculator.clip_grad_norm_(cfg.grad_clip_thresh).item()
         optimizer.step()
         scheduler.step()
 
@@ -457,6 +466,38 @@ class EmbedLLaMA(LLaMA):
         return out
 
 
+class EmbedGranite(Granite):
+    # Overrides the forward function of Granite to allow returning embedding vectors
+    def forward(
+        self,
+        x,
+        mask=None,
+        position_ids=None,
+        past_key_value_states=None,
+        use_cache=False,
+        only_last_token=False,
+        attn_algorithm=None,
+        include_embeds=False,
+    ):
+        output, cache = self._helper(
+            x, mask, position_ids, past_key_value_states, use_cache, attn_algorithm
+        )
+
+        if only_last_token:
+            output = output[:, -1, :]
+        preds = self.shared(output, reverse=True)
+        preds = preds / self.config.logits_scaling
+
+        out = [preds]
+        if use_cache:
+            out.append(cache)
+        if include_embeds:
+            out.append(output)
+        if len(out) == 1:
+            return out[0]
+        return out
+
+
 class ModelEmbedsWrapper(nn.Module):
     def __init__(self, base_model):
         super(ModelEmbedsWrapper, self).__init__()
@@ -552,6 +593,11 @@ def _gpt_bigcode_factory_factory(config):
 def _llama_factory_factory(config):
     def factory(**kwargs):
         return EmbedLLaMA(config, **kwargs)
+    return factory
+
+def _granite_factory_factory(config):
+    def factory(**kwargs):
+        return EmbedGranite(config, **kwargs)
     return factory
 
 def _mixtral_factory_factory(config):
@@ -732,6 +778,7 @@ register_model("embedcalico", "3b", _calico_factory_factory(_calico_3b_config))
 register_model("embedcalico", "8b", _calico_factory_factory(_calico_8b_config))
 serialization.register_adapter("embedcalico", "hf", _calico_hf_sd_to_fms_sd)
 
+
 register_model("embedllama", "7b", _llama_factory_factory(get_model_config("7b")))
 register_model("embedllama", "8b", _llama_factory_factory(get_model_config("llama3_8b")))
 register_model("embedllama", "34b", _llama_factory_factory(get_model_config("34b")))
@@ -755,3 +802,20 @@ _8b_bsc_config = LLaMAConfig(
     rope_theta=10000,
 )
 register_model("embedllama", "llama_bsc_8b", _llama_factory_factory(_8b_bsc_config))
+
+_granite_8b_instruct = LLaMAConfig(
+    src_vocab_size=49155,
+    emb_dim=4096,
+    norm_eps=1e-5,
+    nheads=32,
+    kvheads=8,
+    nlayers=40,
+    hidden_grow_factor=12800/4096,
+    max_expected_seq_len=8192,
+    rope_theta=10000,
+)
+register_model("embedllama", "granite.8b.instruct", _llama_factory_factory(_granite_8b_instruct))
+
+from fms.models.granite import _8b_config as _granite_8b_config
+register_model("embedgranite", "8b", _granite_factory_factory(_granite_8b_config))
+serialization.register_adapter("embedgranite", "hf", _granite_hf_sd_to_fms_sd)
