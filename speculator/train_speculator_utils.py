@@ -7,7 +7,7 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
-from fms.utils import serialization, tokenizers
+from fms.utils import serialization, tokenizers, generation
 from fms.utils.generation import _make_cache_contiguous
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
@@ -112,7 +112,7 @@ def generate(
 
 # Stage 1 training
 def stage1_loss(
-    cfg, model, speculator, base_model_input, input, loss_fn, ddp_stats, base_model_mesh
+    cfg, fms_model_tmp,  model, speculator, base_model_input, input, loss_fn, ddp_stats, base_model_mesh
 ):
     """
     Perform a forward pass for stage 1 training and calculate the loss.
@@ -142,11 +142,24 @@ def stage1_loss(
     Returns: scalar loss value, updated ddp stats, number of tokens in input
     """
     with torch.no_grad():
-        _, embeds = model(
+        _, embeds1 = fms_model_tmp(
             base_model_input[:, : -speculator.n_predict - 1],
             include_embeds=True,
             use_cache=False,
         )
+        
+        model.reset_embeds()
+        _ = model(
+            base_model_input[:, : -speculator.n_predict - 1],
+            use_cache=False,
+        )
+        embeds = model.get_embeds()
+        #assert(torch.equal(embeds1,embeds))
+        if False and base_model_mesh["tp"].get_local_rank() == 0:
+            print(f"SAHIL: types: {type(embeds1)}, {type(embeds)} ")
+            print(f"SAHIL: embeds1: {embeds1}")
+            print(f"SAHIL: embeds: {embeds}")
+        
     if cfg.sharding_strategy == "tp":
         embeds = embeds.chunk(base_model_mesh["tp"].size())[
             base_model_mesh["tp"].get_local_rank()
@@ -203,15 +216,27 @@ def stage2_loss(
         base_model_input = base_model_input[
             :, : cfg.stage2_prompt_length * grow_factor
         ].reshape(base_model_input.size(0) * grow_factor, cfg.stage2_prompt_length)
-        targs, embeds = generate(
+        if False:
+            targs, embeds1 = generate(
+                model,
+                base_model_input,
+                cfg.seq_length,
+                cfg.stage2_seq_length,
+                do_sample=True,
+                use_cache=True,
+                include_embeds=True,
+            )
+        
+        model.reset_embeds()
+        targs = generation.generate(
             model,
             base_model_input,
             cfg.seq_length,
             cfg.stage2_seq_length,
             do_sample=True,
             use_cache=True,
-            include_embeds=True,
         )
+        embeds = model.get_embeds()
 
         if cfg.sharding_strategy == "tp":
             targs = targs.chunk(base_model_mesh["tp"].size())[
@@ -254,6 +279,7 @@ def do_ckpt(ckpt_save_path, reset=False):
 
 def train_speculator(
     cfg: train_config,
+    fms_model_tmp,
     model: nn.Module,
     speculator: nn.Module,
     local_rank: int,
@@ -311,6 +337,8 @@ def train_speculator(
     loss_fn = CrossEntropyLoss()
     elapsed_tokens = 0
     for batch_idx, input in enumerate(train_loader, start=start_step + 1):
+        #if batch_idx > 1 :
+        #    exit()
         if batch_idx > cfg.num_steps:
             break
 
@@ -334,6 +362,7 @@ def train_speculator(
         if batch_idx <= cfg.stage2_start_step:
             loss, ddp_stats, step_tok = stage1_loss(
                 cfg,
+                fms_model_tmp,
                 model,
                 speculator,
                 base_model_input,
@@ -423,3 +452,37 @@ def train_speculator(
         tokens_seen=elapsed_tokens + n_tok,
         is_compiled=cfg.use_torch_compile,
     )
+
+
+class EmbedModel(nn.Module):
+    # Overrides the forward function of the model to allow returning embedding vectors
+    def __init__(self, base_model: nn.Module, head: nn.Module, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.base_model = base_model
+        self.head = head
+        self.embeds = None
+
+    def forward(self, *args, **kwargs):
+        hidden_states, past_key_value_states = self.base_model(*args, **kwargs)
+        if self.embeds is None:
+            self.embeds = hidden_states
+        else:
+            self.embeds = torch.cat((self.embeds, hidden_states), dim=-2)        
+
+        if hasattr(self.head, "reversible"):
+            logits = self.head(hidden_states, reverse=True)
+        else:    
+            logits = self.head(hidden_states)
+            
+        if past_key_value_states is not None:
+            return logits, past_key_value_states
+        else:
+            return logits
+
+    def reset_embeds(self):
+        self.embeds = None
+
+    def get_embeds(self):
+        embeds = self.embeds
+        self.embeds = None
+        return embeds

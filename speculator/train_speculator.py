@@ -24,7 +24,7 @@ from fms_fsdp.utils.train_utils import (
     setup,
     setup_environ_flags,
 )
-from speculator.train_speculator_utils import train_speculator
+from speculator.train_speculator_utils import train_speculator, EmbedModel
 
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -229,6 +229,26 @@ def main(**kwargs):
             )
         model = torch.compile(model)
         speculator = torch.compile(speculator)
+    
+    fms_model_tmp = model
+    if hasattr(model, "base_model") and hasattr(model, "head"):
+        model = EmbedModel(base_model=model.base_model, head=model.head)
+    else:   # llama    
+        model = EmbedModel(base_model=model._helper, head=model.shared)
+    
+    #if cfg.use_torch_compile:
+    #    model = torch.compile(model)
+    #    speculator = torch.compile(speculator)
+    
+    if rank == 0:
+        print(model)
+
+    #model.eval()
+    #with torch.no_grad():
+        #test_model(rank, fms_model_tmp, cfg.model_arch, cfg)
+        #test_model(rank, model, cfg.model_arch, cfg)
+        #print(model.get_embeds())
+    #exit()
 
     # Optimizer
     optimizer = optim.AdamW(
@@ -308,6 +328,7 @@ def main(**kwargs):
     torch.cuda.empty_cache()
     train_speculator(
         cfg,
+        fms_model_tmp,
         model,
         speculator,
         local_rank,
