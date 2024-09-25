@@ -144,7 +144,7 @@ def stage1_loss(
     with torch.no_grad():
         _, embeds1 = fms_model_tmp(
             base_model_input[:, : -speculator.n_predict - 1],
-            include_embeds=True,
+            include_embeds=True,  # requires branch inclemb from fms for equivalence testing
             use_cache=False,
         )
         
