@@ -198,7 +198,22 @@ def get_speculator_info_allam():
     return path, name, config, base_model_hf_repo
 
 
-path, name, config, base_model_hf_repo = get_speculator_info_allam()
+def get_speculator_info_granite_8b():
+    path = "/gpfs/suneja/checkpoints/granite-8b-instruct/checkpoints/step_18782_ckp.pth"
+    name = "granite.8b.436m"
+    config = {
+        "emb_dim": 4096,
+        "vocab_size": 49155,
+        "n_predict": 4,
+        "inner_dim": 4096,
+        "scale_input": True,
+        "tie_weights": True
+    }
+    base_model_hf_repo="/gpfs/suneja/models/dmf_models/granite-8b-instruct-preview-4k-r240917a/"
+    return path, name, config, base_model_hf_repo
+
+
+path, name, config, base_model_hf_repo = get_speculator_info_granite_8b()
 path = register_speculator(path, name, config)
 convert_speculator(path, name, config, base_model_hf_repo)
 

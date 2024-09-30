@@ -56,7 +56,7 @@ SPECULATOR_ARGS_GRANITE="\
 #--tokenizer_path="/gpfs/prangan/hub/models--ibm-granite--granite-34b-code-instruct/snapshots/20f67e1f9b6016f62652916d7e887c7250c46382/"
 
 
-SPECULATOR_ARGS_GRANITE_8B="\
+SPECULATOR_ARGS_GRANITE_8B_CODE="\
 --architecture=paged_llama
 --variant=calico.8b.code
 --model_path="/gpfs/prangan/hub/models--ibm-granite--granite-8b-code-instruct/snapshots/8a0fc76e4d374188e0cc8794d2d7275aa5aa7e64"
@@ -72,7 +72,7 @@ SPECULATOR_ARGS_GRANITE_8B="\
 "
 #--speculator_path="/gpfs/prangan/backup-ckptx/checkpoints/step_15001_ckp.pth"
 
-SPECULATOR_ARGS_GRANITE_8B_HF="\
+SPECULATOR_ARGS_GRANITE_8B_CODE_HF="\
 --architecture=paged_llama
 --variant=calico.8b.128k.code
 --model_path="/gpfs/suneja/models/hub/models--ibm-granite--granite-8b-code-base-128k/snapshots/5fa5ac8bc21dab21133b34854f42de9631ca9cf5"
@@ -262,10 +262,9 @@ SPECULATOR_ARGS_LLAMA3_8B_HF="\
 SPECULATOR_ARGS_GRANITE_20B_HF="\
 --architecture=paged_gpt_bigcode
 --variant=ibm.20b
---model_path="/gpfs/suneja/models/granite-20b-code-base"
---tokenizer_path="/gpfs/suneja/models/granite-20b-code-base"
+--model_path="/gpfs/suneja/models/dmf_models/granite-20b-code-instruct-20240506"
+--tokenizer_path="/gpfs/suneja/models/dmf_models/granite-20b-code-instruct-20240506"
 --model_source=hf
---speculator_path="/gpfs/suneja/models/granite-20b-code-instruct-accelerator"
 --prompt_len=64
 --data_path="/gpfs/suneja/datasets/bluepile-granite/lang\=en/"
 --subdata="dataset=github_clean"
@@ -275,6 +274,11 @@ SPECULATOR_ARGS_GRANITE_20B_HF="\
 "
 #--model_path="/gpfs/suneja/models/dmf_models/granite-20b-code-instruct-20240506"
 #--tokenizer_path="/gpfs/suneja/models/dmf_models/granite-20b-code-instruct-20240506"
+#--model_path="/gpfs/suneja/models/granite-20b-code-instruct-8k"
+#--tokenizer_path="/gpfs/suneja/models/granite-20b-code-instruct-8k"
+#--speculator_path="/gpfs/suneja/models/granite-20b-code-instruct-accelerator"
+#--model_path="/gpfs/suneja/models/granite-20b-code-base"
+#--tokenizer_path="/gpfs/suneja/models/granite-20b-code-base"
 
 SPECULATOR_ARGS_LLAMA2_13B_HF="\
 --architecture=paged_llama
@@ -545,6 +549,24 @@ SPECULATOR_ARGS_LLAMA3_1_8B_HF="\
 #--n_candidates=5
 #--threshes=[6,4,3,3]
 
+
+SPECULATOR_ARGS_GRANITE_8B_HF="\
+--architecture=paged_granite
+--variant=8b
+--model_path="/gpfs/suneja/models/dmf_models/granite-8b-instruct-preview-4k-r240917a"
+--tokenizer_path="/gpfs/suneja/models/dmf_models/granite-8b-instruct-preview-4k-r240917a"
+--speculator_load_type=hf_remote
+--model_source=hf
+--prompt_len=64
+--data_path=/gpfs/suneja/datasets/bp7_gpt2tokenizer/lang=en/
+--subdata="'dataset=commoncrawl'"
+--seed=211
+--n_predict=4
+--n_candidates=5
+--threshes=[6,5,4,3]
+"
+#--speculator_path="/gpfs/suneja/checkpoints/granite-8b-instruct/checkpoints/accelerator"
+
 DO_BACKGROUND=0
 TP=0
 
@@ -566,6 +588,6 @@ else
         export CUDA_VISIBLE_DEVICES=4
         torchrun \
             speculator/benchmark_speculator_logical.py \
-            ${SPECULATOR_ARGS_LLAMA3_8B_HF}
+            ${SPECULATOR_ARGS_GRANITE_20B_HF}
     fi
 fi

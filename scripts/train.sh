@@ -491,7 +491,7 @@ MODEL_ARGS_GRANITE_8B_INSTRUCT="\
 --num_steps=21000
 --stage2_start_step=15000
 --stage2_batch_size=96
---use_torch_compile=True
+--use_torch_compile=False
 --learning_rate=1e-3
 --seed=42
 --datasets="'dataset=commoncrawl'"
