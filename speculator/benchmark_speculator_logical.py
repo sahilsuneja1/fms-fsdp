@@ -283,8 +283,8 @@ in_middle = False
 print("pulling data to build reusable prompt set")
 #import pdb
 #pdb.set_trace()
-while len(data) < 2:
-#while len(data) < 256:
+#while len(data) < 2:
+while len(data) < 256:
     chunk = next(dataset)
     if not in_middle:
         data.append(chunk[: args.prompt_len])
@@ -365,7 +365,7 @@ def infer(ids, k, warmup, model, decode_model, speculator):
     if not warmup:
         total_tokens = 0
         for i in range(len(result)):
-            print_result(result[i], ids[i], n_steps)
+            #print_result(result[i], ids[i], n_steps)
             total_tokens += len(result[i]) - len(ids[i])
         avg_tokens = total_tokens / len(result)
         return generated_token_time_out / avg_tokens, avg_tokens / n_steps

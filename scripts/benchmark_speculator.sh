@@ -262,12 +262,13 @@ SPECULATOR_ARGS_LLAMA3_8B_HF="\
 SPECULATOR_ARGS_GRANITE_20B_HF="\
 --architecture=paged_gpt_bigcode
 --variant=ibm.20b
---model_path="/gpfs/suneja/models/dmf_models/granite-20b-code-instruct-20240506"
---tokenizer_path="/gpfs/suneja/models/dmf_models/granite-20b-code-instruct-20240506"
+--model_path="/gpfs/suneja/models/granite-20b-code-instruct-8k"
+--tokenizer_path="/gpfs/suneja/models/granite-20b-code-instruct-8k"
 --model_source=hf
 --prompt_len=64
 --data_path="/gpfs/suneja/datasets/bluepile-granite/lang\=en/"
 --subdata="dataset=github_clean"
+--speculator_path="/gpfs/suneja/models/granite-20b-code-instruct-accelerator"
 --speculator_load_type=hf_remote
 --threshes=[6,4,3,3]
 --seed=211
@@ -276,7 +277,6 @@ SPECULATOR_ARGS_GRANITE_20B_HF="\
 #--tokenizer_path="/gpfs/suneja/models/dmf_models/granite-20b-code-instruct-20240506"
 #--model_path="/gpfs/suneja/models/granite-20b-code-instruct-8k"
 #--tokenizer_path="/gpfs/suneja/models/granite-20b-code-instruct-8k"
-#--speculator_path="/gpfs/suneja/models/granite-20b-code-instruct-accelerator"
 #--model_path="/gpfs/suneja/models/granite-20b-code-base"
 #--tokenizer_path="/gpfs/suneja/models/granite-20b-code-base"
 

@@ -3,8 +3,10 @@ import json
 
 #data_path="/gpfs/suneja/datasets/bp7_llama2"
 #subdata="lang=en/dataset=github_clean"
-data_path="/gpfs/bsc_data/"
-subdata="lang=es/dataset=wikipedia"
+#data_path="/gpfs/bsc_data/"
+#subdata="lang=es/dataset=wikipedia"
+data_path="/gpfs/suneja/datasets/bp7_gpt2tokenizer/lang=en/"
+subdata="dataset=commoncrawl"
 seed = 211
 prompt_len=64
 
@@ -40,5 +42,5 @@ while len(data) < 256:
         in_middle = True
 
 
-with open('BSC-8b-benchmark_speculator_prompts.json','w') as f:
+with open('Granite8b-benchmark_speculator_prompts.json','w') as f:
     json.dump(data, f)
