@@ -11,8 +11,8 @@ from fms.models.gpt_bigcode import GPTBigCode, GPTBigCodeConfig
 from fms.models.gpt_bigcode import _hf_sd_to_fms_sd as _gptbigcode_hf_sd_to_fms_sd
 from fms.models.llama import LLaMA
 from fms.models.llama import _hf_sd_to_fms_sd as _llama_hf_sd_to_fms_sd
-from fms.models.granite import Granite
-from fms.models.granite import _hf_sd_to_fms_sd as _granite_hf_sd_to_fms_sd
+#from fms.models.granite import Granite
+#from fms.models.granite import _hf_sd_to_fms_sd as _granite_hf_sd_to_fms_sd
 from fms.models.mixtral import Mixtral, MixtralConfig
 from fms.models.mixtral import _hf_sd_to_fms_sd as _mixtral_hf_sd_to_fms_sd
 from fms_extras.models.calico import Calico, CalicoConfig
@@ -466,7 +466,8 @@ class EmbedLLaMA(LLaMA):
         return out
 
 
-class EmbedGranite(Granite):
+#class EmbedGranite(Granite):
+class EmbedGranite():
     # Overrides the forward function of Granite to allow returning embedding vectors
     def forward(
         self,
@@ -816,6 +817,6 @@ _granite_8b_instruct = LLaMAConfig(
 )
 register_model("embedllama", "granite.8b.instruct", _llama_factory_factory(_granite_8b_instruct))
 
-from fms.models.granite import _8b_config as _granite_8b_config
-register_model("embedgranite", "8b", _granite_factory_factory(_granite_8b_config))
-serialization.register_adapter("embedgranite", "hf", _granite_hf_sd_to_fms_sd)
+#from fms.models.granite import _8b_config as _granite_8b_config
+#register_model("embedgranite", "8b", _granite_factory_factory(_granite_8b_config))
+#serialization.register_adapter("embedgranite", "hf", _granite_hf_sd_to_fms_sd)

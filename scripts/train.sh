@@ -193,27 +193,28 @@ MODEL_ARGS_GRANITE34B="\
 MODEL_ARGS_GRANITE_20B="\
 --model_arch=embedgpt_bigcode
 --model_variant=20b
---model_path="/gpfs/suneja/models/dmf_models/granite-20b-code-instruct-20240506"
---ckpt_load_path=/gpfs/suneja/checkpoints/granite-20b-tp
---ckpt_save_path=/gpfs/suneja/checkpoints/granite-20b-tp
+--model_path="/gpfs/suneja/models/granite-20b-code-instruct-8k"
+--ckpt_load_path=/gpfs/suneja/checkpoints/granite-20b-code-instruct-r1.1
+--ckpt_save_path=/gpfs/suneja/checkpoints/granite-20b-code-instruct-r1.1
 --data_path=/gpfs/suneja/datasets/bluepile-granite
 --logical_shards=768
 --sharding_strategy=tp
 --seq_length=8192
 --batch_size=1
 --report_interval=10
---checkpoint_interval=5000
---num_steps=21000
---stage2_start_step=15000
---stage2_batch_size=48
---n_speculator_heads=5
---speculator_width=6144
---use_torch_compile=True
+--checkpoint_interval=3000
+--num_steps=6000
+--stage2_start_step=30
+--stage2_batch_size=96
+--n_speculator_heads=4
+--speculator_width=4096
+--use_torch_compile=False
 --learning_rate=1e-3
 --seed=42
 --datasets="'lang=en/dataset=github_clean'"
 --weights="'1'"
 "
+#--model_path="/gpfs/suneja/models/dmf_models/granite-20b-code-instruct-20240506"
 
 MODEL_ARGS_GRANITE8B="\
 --model_path=/gpfs/prangan/hub/models--ibm-granite--granite-8b-code-instruct/snapshots/8a0fc76e4d374188e0cc8794d2d7275aa5aa7e64/
@@ -518,7 +519,7 @@ else
     torchrun \
         --nproc_per_node=8 \
         speculator/train_speculator.py \
-        ${MODEL_ARGS_GRANITE_8B_INSTRUCT}
+        ${MODEL_ARGS_GRANITE_20B}
 fi        
 
 

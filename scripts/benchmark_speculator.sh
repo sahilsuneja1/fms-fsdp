@@ -216,6 +216,9 @@ SPECULATOR_ARGS_GRANITE20B_COBOL="\
 "
 #--speculator_path="/gpfs/suneja/checkpoints/grantite-20b-code-instruct-v1-speculator/step_42001_ckp.pth"
 #--speculator_path="/gpfs/suneja/checkpoints/granite-20b-cobol-st1/checkpoints/step_3001_ckp.pth"
+#--data_path="/gpfs/prangan/data_g20bc_tokenizer/code_data"
+#--subdata="dataset=ptv15_to_supervised"
+#--subdata="dataset=ptv15_to_unsupervised"
 
 
 SPECULATOR_ARGS_GRANITE20B_COBOL_PTV18="\
@@ -233,9 +236,23 @@ SPECULATOR_ARGS_GRANITE20B_COBOL_PTV18="\
 --threshes=[6,4,3,3]
 --seed=211
 "
-#--data_path="/gpfs/prangan/data_g20bc_tokenizer/code_data"
-#--subdata="dataset=ptv15_to_supervised"
-#--subdata="dataset=ptv15_to_unsupervised"
+
+SPECULATOR_ARGS_GRANITE20B_COBOL_PTV18_HF="\
+--architecture=paged_gpt_bigcode
+--variant=ibm.20b.cobol.ptv18
+--model_path="/gpfs/suneja/models/granite-20b-cobol-ptv18-4-8k-8k-10Btok"
+--tokenizer_path="/gpfs/suneja/models/granite-20b-cobol-ptv18-4-8k-8k-10Btok"
+--model_source=hf
+--speculator_path="/gpfs/suneja/models/granite-20b-cobol-accelerator/"
+--speculator_load_type=hf_remote
+--prompt_len=64
+--data_path="/gpfs/prangan/data_g20bc_ptv18/code_data"
+--subdata="ptv18_to_unsupervised"
+--n_predict=4
+--n_candidates=5
+--threshes=[6,4,3,3]
+--seed=211
+"
 
 
 SPECULATOR_ARGS_LLAMA3_8B_HF="\
@@ -268,11 +285,12 @@ SPECULATOR_ARGS_GRANITE_20B_HF="\
 --prompt_len=64
 --data_path="/gpfs/suneja/datasets/bluepile-granite/lang\=en/"
 --subdata="dataset=github_clean"
---speculator_path="/gpfs/suneja/models/granite-20b-code-instruct-accelerator"
+--speculator_path="/gpfs/suneja/checkpoints/granite-20b-code-instruct-r1.1/checkpoints/granite-20b-code-instruct-8k/accelerator/"
 --speculator_load_type=hf_remote
 --threshes=[6,4,3,3]
 --seed=211
 "
+#--speculator_path="/gpfs/suneja/models/granite-20b-code-instruct-accelerator"
 #--model_path="/gpfs/suneja/models/dmf_models/granite-20b-code-instruct-20240506"
 #--tokenizer_path="/gpfs/suneja/models/dmf_models/granite-20b-code-instruct-20240506"
 #--model_path="/gpfs/suneja/models/granite-20b-code-instruct-8k"
@@ -450,12 +468,17 @@ SPECULATOR_ARGS_BSC_8B_HF="\
 --model_source=hf
 --prompt_len=64
 --data_path="/gpfs/bsc_data/"
---subdata="lang=en/dataset=webhose"
+--subdata="lang=es/dataset=wikipedia"
 --seed=211
 --n_predict=4
 --n_candidates=5
 --threshes=[6,5,4,3]
 "
+#--model_path="/gpfs/prangan/bsc_models_from_hf/7b_instruct/models--BSC-LT--salamandra-7b-instruct/snapshots/91fa45da1b0e503f39b066e04b2901b1ed71d1f7/"
+#--tokenizer_path="/gpfs/prangan/bsc_models_from_hf/7b_instruct/models--BSC-LT--salamandra-7b-instruct/snapshots/91fa45da1b0e503f39b066e04b2901b1ed71d1f7/"
+#--model_path="/gpfs/bsc_models/"
+#--tokenizer_path="/gpfs/bsc_models/"
+#--subdata="lang=en/dataset=webhose"
 #--subdata="lang=es/dataset=wikipedia"
 #--tokenizer_path="/gpfs/bsc_models/tokenizer.model"
 
@@ -585,9 +608,12 @@ else
             speculator/benchmark_speculator_logical_tp.py \
             ${SPECULATOR_ARGS_LLAMA3_8B_HF_TP}
     else        
-        export CUDA_VISIBLE_DEVICES=4
+        export CUDA_VISIBLE_DEVICES=2
         torchrun \
             speculator/benchmark_speculator_logical.py \
-            ${SPECULATOR_ARGS_GRANITE_20B_HF}
+            ${SPECULATOR_ARGS_GRANITE20B_COBOL_PTV18_HF}
     fi
 fi
+
+#for parallel runs on the same node, across different GPUs
+#--rdzv-endpoint=0.0.0.0:29510 \

@@ -223,8 +223,8 @@ def main(**kwargs):
         #tie_emb=True,
         #tie_head=True,
         #tie_transition=True,
-        tie_weights=True,
-        scale_input=True,
+        #tie_weights=True,
+        #scale_input=True,
     )
     speculator.reset_parameters()
 

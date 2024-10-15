@@ -213,7 +213,37 @@ def get_speculator_info_granite_8b():
     return path, name, config, base_model_hf_repo
 
 
-path, name, config, base_model_hf_repo = get_speculator_info_granite_8b()
+def get_speculator_info_granite_20b():
+    path = "/gpfs/suneja/checkpoints/granite-20b-code-instruct-r1.1/checkpoints/step_6001_ckp.pth"
+    name = "granite.20b.1.7b"
+    config = {
+        "emb_dim": 6144,
+        "vocab_size": 49152,
+        "n_predict": 4,
+        "inner_dim": 4096,
+        "scale_input": False,
+        "tie_weights": False
+    }
+    base_model_hf_repo="/gpfs/suneja/models/granite-20b-code-instruct-8k"
+    return path, name, config, base_model_hf_repo
+
+
+def get_speculator_info_granite_20b_cobol():
+    path = "/gpfs/suneja/checkpoints/granite-20b-cobol-1/checkpoints/step_3601_ckp.pth"
+    name = "granite.20b.cobol.1.7b"
+    config = {
+        "emb_dim": 6144,
+        "vocab_size": 49152,
+        "n_predict": 4,
+        "inner_dim": 4096,
+        "scale_input": True,
+        "tie_weights": False
+    }
+    base_model_hf_repo="/gpfs/suneja/models/granite-20b-code-instruct-8k"
+    return path, name, config, base_model_hf_repo
+
+
+path, name, config, base_model_hf_repo = get_speculator_info_granite_20b()
 path = register_speculator(path, name, config)
 convert_speculator(path, name, config, base_model_hf_repo)
 
