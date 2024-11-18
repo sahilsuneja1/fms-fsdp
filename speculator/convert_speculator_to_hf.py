@@ -154,7 +154,8 @@ def get_speculator_info_llama3_70b_specu2_to_specu1():
 
 
 def get_speculator_info_bsc_8b_specu2_to_specu1():
-    path = "/gpfs/prangan/ckpts/spanish/checkpoints/step_21001_ckp_specu_v1.pth"
+    #path = "/gpfs/prangan/ckpts/spanish/checkpoints/step_21001_ckp_specu_v1.pth"
+    path = "/gpfs/prangan/ckpts/spanishv1_stage1n2/checkpoints/step_15001_ckp_specu_v1.pth"
     name = "bsc.8b.2b"
     config = {
         "emb_dim": 4096,
@@ -164,7 +165,8 @@ def get_speculator_info_bsc_8b_specu2_to_specu1():
         "scale_input": True,
         "tie_weights": True
     }
-    base_model_hf_repo="/gpfs/bsc_models/"
+    #base_model_hf_repo="/gpfs/bsc_models/"
+    base_model_hf_repo="/gpfs/prangan/bsc_models_from_hf/7b_instruct/models--BSC-LT--salamandra-7b-instruct/snapshots/91fa45da1b0e503f39b066e04b2901b1ed71d1f7/"
     return path, name, config, base_model_hf_repo
 
 
@@ -239,11 +241,11 @@ def get_speculator_info_granite_20b_cobol():
         "scale_input": True,
         "tie_weights": False
     }
-    base_model_hf_repo="/gpfs/suneja/models/granite-20b-code-instruct-8k"
+    base_model_hf_repo=""
     return path, name, config, base_model_hf_repo
 
 
-path, name, config, base_model_hf_repo = get_speculator_info_granite_20b()
+path, name, config, base_model_hf_repo = get_speculator_info_bsc_8b_specu2_to_specu1()
 path = register_speculator(path, name, config)
 convert_speculator(path, name, config, base_model_hf_repo)
 

@@ -283,7 +283,7 @@ in_middle = False
 print("pulling data to build reusable prompt set")
 #import pdb
 #pdb.set_trace()
-#while len(data) < 2:
+#while len(data) < 10:
 while len(data) < 100:
     chunk = next(dataset)
     if not in_middle:

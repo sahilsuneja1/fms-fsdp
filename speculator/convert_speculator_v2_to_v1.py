@@ -4,7 +4,8 @@ from collections import OrderedDict
 
 #v2_ckpt_filepath = "/gpfs/suneja/checkpoints/llama3-70b-specu2-wtinitfix/checkpoints/step_14212_ckp.pth"
 #v2_ckpt_filepath = "/gpfs/prangan/ckpts/spanish/checkpoints/step_21001_ckp.pth"
-v2_ckpt_filepath = "/gpfs/suneja/checkpoints/llama3-405b-specu12k-1024/checkpoints/step_6001_ckp.pth"
+#v2_ckpt_filepath = "/gpfs/suneja/checkpoints/llama3-405b-specu12k-1024/checkpoints/step_6001_ckp.pth"
+v2_ckpt_filepath = "/gpfs/prangan/ckpts/spanishv1_stage1n2/checkpoints/step_15001_ckp.pth"
 
 v2 = torch.load(v2_ckpt_filepath)
 d2 = v2['model_state']

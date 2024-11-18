@@ -254,6 +254,27 @@ SPECULATOR_ARGS_GRANITE20B_COBOL_PTV18_HF="\
 --seed=211
 "
 
+SPECULATOR_ARGS_GRANITE20B_COBOL_PTV19_HF="\
+--architecture=paged_gpt_bigcode
+--variant=ibm.20b.cobol.ptv19
+--model_path="/gpfs/suneja/models/granite-20b-cobol-ptv19-4-8k-revised-ckpt_step_5011_wo_optimizer_state"
+--tokenizer_path="/gpfs/suneja/models/granite-20b-cobol-ptv19-4-8k-revised-ckpt_step_5011_wo_optimizer_state"
+--model_source=hf
+--speculator_path="/gpfs/suneja/models/granite-20b-cobol-accelerator/"
+--speculator_load_type=hf_remote
+--prompt_len=64
+--data_path="/gpfs/prangan/data_g20bc_ptv19/code_data"
+--subdata="ptv19_to_supervised_indexable"
+--n_predict=4
+--n_candidates=5
+--threshes=[6,4,3,3]
+--seed=211
+"
+#--data_path="/gpfs/prangan/data_g20bc_ptv19/code_data"
+#--subdata="ptv19_to_supervised"
+#--data_path="/gpfs/prangan/data_g20bc_ptv18/code_data"
+#--subdata="ptv18_to_unsupervised"
+
 
 SPECULATOR_ARGS_LLAMA3_8B_HF="\
 --architecture=paged_llama
@@ -483,6 +504,32 @@ SPECULATOR_ARGS_BSC_8B_HF="\
 #--tokenizer_path="/gpfs/bsc_models/tokenizer.model"
 
 
+SPECULATOR_ARGS_BSC_8B_SALAMANDER_HF="\
+--architecture=paged_llama
+--variant=8b.bsc
+--model_path="/gpfs/prangan/bsc_models_from_hf/7b_instruct/models--BSC-LT--salamandra-7b-instruct/snapshots/91fa45da1b0e503f39b066e04b2901b1ed71d1f7/"
+--tokenizer_path="/gpfs/prangan/bsc_models_from_hf/7b_instruct/models--BSC-LT--salamandra-7b-instruct/snapshots/91fa45da1b0e503f39b066e04b2901b1ed71d1f7/"
+--speculator_path="/gpfs/prangan/ckpts/spanishv1_stage1n2/checkpoints/accelerator"
+--speculator_load_type=hf_remote
+--model_source=hf
+--prompt_len=64
+--data_path="/gpfs/bsc_data/new_version"
+--subdata="lang=en/dataset=textbook"
+--seed=211
+--n_predict=4
+--n_candidates=3
+--threshes=[6,5,4,3]
+"
+#--data_path="/gpfs/bsc_data/"
+#--subdata="lang=es/dataset=wikipedia"
+#--subdata="lang=en/dataset=webhose"
+#--data_path="/gpfs/bsc_data/new_version"
+#--subdata="lang=en/dataset=wikimedia"
+#--subdata="lang=es/dataset=commoncrawl"
+#--subdata="lang=en/dataset=textbook"
+#--subdata="lang=es/commoncrawl_test"
+
+
 SPECULATOR_ARGS_LLAMA3_8B_HF_TP="\
 --architecture=paged_llama
 --variant=llama3.8b
@@ -610,8 +657,9 @@ else
     else        
         export CUDA_VISIBLE_DEVICES=2
         torchrun \
+            --rdzv-endpoint=0.0.0.0:29510 \
             speculator/benchmark_speculator_logical.py \
-            ${SPECULATOR_ARGS_GRANITE20B_COBOL_PTV18_HF}
+            ${SPECULATOR_ARGS_BSC_8B_SALAMANDER_HF}
     fi
 fi
 
