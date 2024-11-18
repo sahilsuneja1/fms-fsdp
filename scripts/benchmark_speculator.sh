@@ -178,18 +178,40 @@ SPECULATOR_ARGS_BSC_8B="\
 --architecture=paged_llama
 --variant=8b.bsc
 --model_path="/gpfs/bsc_models/"
---tokenizer_path="/gpfs/bsc_models/tokenizer.model"
---speculator_path="/gpfs/prangan/ckpts/spanish/checkpoints/step_21001_ckp.pth"
+--tokenizer_path="/gpfs/bsc_models/"
 --model_source=hf
 --prompt_len=64
 --data_path="/gpfs/bsc_data/"
 --subdata="lang=en/dataset=webhose"
+--speculator_path="/gpfs/prangan/ckpts/spanish/checkpoints/step_21001_ckp.pth"
 --seed=211
 --n_predict=4
 --n_candidates=5
 --threshes=[6,5,4,3]
 "
+#--tokenizer_path="/gpfs/bsc_models/tokenizer.model"
 #--subdata="lang=es/dataset=wikipedia
+
+
+SPECULATOR_ARGS_BSC_8B_SALAMANDER="\
+--architecture=paged_llama
+--variant=8b.bsc
+--model_path="/gpfs/prangan/bsc_models_from_hf/7b_instruct/models--BSC-LT--salamandra-7b-instruct/snapshots/91fa45da1b0e503f39b066e04b2901b1ed71d1f7/"
+--tokenizer_path="/gpfs/prangan/bsc_models_from_hf/7b_instruct/models--BSC-LT--salamandra-7b-instruct/snapshots/91fa45da1b0e503f39b066e04b2901b1ed71d1f7/"
+--model_source=hf
+--prompt_len=64
+--data_path="/gpfs/bsc_data/new_version"
+--subdata="lang=en/dataset=wikimedia"
+--speculator_path="/gpfs/prangan/ckpts/spanishv1_stage1n2/checkpoints/step_15001_ckp.pth"
+--seed=211
+--n_predict=4
+--n_candidates=5
+--threshes=[6,5,4,3]
+"
+#--data_path="/gpfs/bsc_data/new_version"
+#--subdata="lang=es/dataset=commoncrawl"
+#--data_path="/gpfs/bsc_data/"
+#--subdata="lang=en/dataset=webhose"
 
 DO_BACKGROUND=0
 
@@ -204,6 +226,7 @@ else
     export CUDA_VISIBLE_DEVICES=1
     torchrun \
         --nproc_per_node=1 \
+        --rdzv-endpoint=0.0.0.0:29510\
         speculator/benchmark_speculator_logical.py \
-        ${SPECULATOR_ARGS_BSC_8B}
+        ${SPECULATOR_ARGS_BSC_8B_SALAMANDER}
 fi

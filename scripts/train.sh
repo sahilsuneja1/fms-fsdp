@@ -59,6 +59,30 @@ MODEL_ARGS_LLAMA3_70B="\
 #--data_path=/gpfs/suneja/datasets/llama3-dolma
 #--datasets='dataset=stack'
 
+MODEL_ARGS_LLAMA3_1_70B="\
+--model_path=/gpfs/suneja/models/Llama-3.1-70B-Instruct
+--model_arch=embedllama
+--model_variant=llama3_1_70b
+--ckpt_load_path=/gpfs/suneja/checkpoints/llama3_1-70b
+--ckpt_save_path=/gpfs/suneja/checkpoints/llama3_1-70b
+--sharding_strategy=tp
+--logical_shards=768
+--seq_length=8192
+--batch_size=2
+--report_interval=10
+--checkpoint_interval=3000
+--num_steps=20000
+--stage2_start_step=14211
+--stage2_batch_size=36
+--n_speculator_heads=4
+--speculator_width=8192
+--data_path=/gpfs/dolma_v1_7
+--datasets='dataset=cc_en_head,dataset=cc_en_middle,dataset=cc_en_tail,dataset=starcoder'
+--weights='0.145,0.183,0.156,0.045'
+--low_cpu_fsdp=False
+--use_torch_compile=False
+"
+
 MODEL_ARGS_LLAMA2_7B="\
 --model_path=/gpfs/suneja/models/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590/
 --model_arch=embedllama
@@ -163,7 +187,7 @@ MODEL_ARGS_LLAMA3_405B="\
 --weights="'1'"
 "
 
-DO_BACKGROUND=0
+DO_BACKGROUND=1
 
 if [ $DO_BACKGROUND -eq 1 ]
 then
@@ -173,7 +197,7 @@ then
     nohup torchrun \
         --nproc_per_node=8 \
         speculator/train_speculator_tp.py \
-        ${MODEL_ARGS_LLAMA3_70B}\
+        ${MODEL_ARGS_LLAMA3_1_70B}\
         >$FOUT &
 else
     torchrun \
